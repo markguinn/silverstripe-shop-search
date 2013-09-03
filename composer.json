@@ -1,0 +1,22 @@
+{
+	"name": "markguinn/silverstripe-shop-search",
+	"description": "Better search for Silverstripe's shop module with interchangeable adapters (currently mysql and solr) and filtering/faceting.",
+	"type": "silverstripe-module",
+	"keywords": ["silverstripe", "ecommerce", "shop", "search", "fulltext", "facets", "solr"],
+	"license": "MIT",
+	"authors": [{
+		"name": "Mark Guinn",
+		"email": "mark@adaircreative.com",
+		"homepage": "http://github.com/markguinn"
+	}],
+	"extra": {
+		"installer-name": "shop_search"
+	},
+	"require": {
+		"silverstripe/framework": "~3.1",
+		"burnbright/silverstripe-shop": "*"
+	},
+	"suggest": {
+		"silverstripe/fulltextsearch": "dev-master"
+	}
+}

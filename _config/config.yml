@@ -1,0 +1,6 @@
+---
+Name: shopsearch
+---
+ContentController:
+  extensions:
+    - ShopSearchControllerExtension
