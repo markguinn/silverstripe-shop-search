@@ -24,13 +24,17 @@ class ShopSearchMysqlSimple implements ShopSearchAdapter
 
 			// convert that list into something we can pass to Datalist::filter
 			$params = array();
-			foreach($fields as $searchField) {
-				$name = (strpos($searchField, ':') !== FALSE) ? $searchField : "$searchField:PartialMatch";
-				$params[$name] = $data['q'];
+			if (!empty($data['q'])) {
+				foreach($fields as $searchField) {
+					$name = (strpos($searchField, ':') !== FALSE) ? $searchField : "$searchField:PartialMatch";
+					$params[$name] = $data['q'];
+				}
 			}
 
 			// add any matches to the big list
-			$matches->merge( DataObject::get($className)->filterAny($params) );
+			$list = DataObject::get($className);
+			if (count($params) > 0) $list = $list->filterAny($params);
+			$matches->merge($list);
 		}
 
 		return new ArrayData(array(

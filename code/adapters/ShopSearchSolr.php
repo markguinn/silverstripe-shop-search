@@ -7,7 +7,7 @@
  * @package shop_search
  */
 class ShopSearchSolr extends SolrIndex
-	implements SearchAdapter
+	implements ShopSearchAdapter
 {
 	/**
 	 * Sets up the index

@@ -1,0 +1,22 @@
+Product:
+  p1:
+    Title: Big Book of Funny Stuff
+    Content: '<p>Abc def Blue Green red</p>'
+    Price: 5
+  p2:
+    Title: Green Pickles
+    Content: '<p>Dill or sweet or whatever</p>'
+    Price: 10.50
+  p3:
+    Title: Red Truck
+    Content: '<p>Test content</p>'
+    Price: 5000
+  p4:
+    Title: Purple Cow
+    Price: 120
+
+Member:
+  m1:
+    FirstName: Test
+    Surname: Guy
+    Email: test@guy.com

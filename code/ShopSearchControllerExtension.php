@@ -8,41 +8,44 @@
  */
 class ShopSearchControllerExtension extends Extension
 {
-	private static $allowed_actions = array('SearchForm', 'results');
+	private static $allowed_actions = array('SearchForm', 'results', 'search_suggest');
 
 	/**
-	 * TODO: this should probably return a ShopSearchForm class instead of creating here
-	 * @return Form
+	 * @return ShopSearchForm
 	 */
 	public function SearchForm() {
-		$f = new Form($this->owner, 'SearchForm',
-			new FieldList(array(
-				TextField::create('q', '')->setAttribute('placeholder', _t('ShopSearch.SEARCH', 'Search'))
-			)),
-			new FieldList(array(
-				FormAction::create('results', _t('ShopSearch.GO', 'Go'))
-			))
-		);
-
-		$f->setFormMethod('GET');
-		$f->disableSecurityToken();
-
-		return $f;
+		return new ShopSearchForm($this->owner, 'SearchForm', $this->owner->Link('search-suggest'));
 	}
 
 	/**
-	 * @param array          $data
-	 * @param Form           $form
-	 * @param SS_HTTPRequest $req
+	 * @param array $data
 	 * @return mixed
 	 */
-	public function results(array $data, Form $form, SS_HTTPRequest $req) {
+	public function results(array $data) {
 		if (!isset($data['q'])) $this->httpError(400);
-		$adapter = singleton(Config::inst()->get('ShopSearch', 'adapter_class'));
-		$results = $adapter->searchFromVars($data);
-		$results->Query = $data['q'];
+		$results = ShopSearch::inst()->search($data);
 		$results->Title = _t('ShopSearch.SearchResults', 'Search Results');
 		$results->Results = $results->Matches;
 		return $this->owner->customise($results)->renderWith(array('Page_results', 'Page'));
+	}
+
+	/**
+	 * @param SS_HTTPRequest $req
+	 * @return string
+	 */
+	public function search_suggest(SS_HTTPRequest $req) {
+		/** @var SS_HTTPResponse $response */
+		$response = $this->owner->getResponse();
+		$callback = $req->requestVar('callback');
+		$results = ShopSearch::inst()->suggest($req->requestVar('term'));
+
+		if ($callback) {
+			$response->addHeader('Content-type', 'application/javascript');
+			$response->setBody($callback . '(' . json_encode($results) . ');');
+		} else {
+			$response->addHeader('Content-type', 'application/json');
+			$response->setBody(json_encode($results));
+		}
+		return $response;
 	}
 }
