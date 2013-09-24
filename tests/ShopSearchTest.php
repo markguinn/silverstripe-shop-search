@@ -12,9 +12,11 @@ class ShopSearchTest extends SapphireTest
 	static $fixture_file = 'ShopSearchTest.yml';
 
 	function setUpOnce() {
+		// TODO: may need to normalize a bit more config here
 		Config::inst()->update('ShopSearch', 'adapter_class', 'ShopSearchMysqlSimple');
 		Config::inst()->remove('Product', 'searchable_fields');
 		Config::inst()->update('Product', 'searchable_fields', array('Title', 'Content'));
+		Config::inst()->remove('ShopSearch', 'facets');
 		parent::setUpOnce();
 	}
 
@@ -104,5 +106,60 @@ class ShopSearchTest extends SapphireTest
 		$this->assertEquals(3, count($r));
 		$this->assertEquals('red', $r[0]);
 		$this->assertEquals('green', $r[1]);
+	}
+
+	/**
+	 * Sorry, this one will be messy if you add new products to the fixture
+	 */
+	function testFacets() {
+		$s = ShopSearch::inst();
+		Config::inst()->update('ShopSearch', 'facets', array(
+			'Model'     => 'By Model',
+		));
+
+		// Given a search for nothing with 1 facet............................................
+		$r = $s->search(array('q' => ''));
+		$this->assertEquals(4, $r->TotalMatches,        'Should contain all products');
+		$this->assertNotEmpty($r->Facets,               'Facets should be present');
+		$this->assertEquals(1, $r->Facets->count(),     'There should be one facet');
+		$model = $r->Facets->first();
+		$this->assertEquals('By Model', $model->Label,  'Label should be correct');
+		$this->assertEquals(3, $model->Values->count(), 'Should be 3 values');
+		$model1 = $model->Values->first();
+		$this->assertEquals('ABC', $model1->Label,      'Value label should be correct');
+		$this->assertEquals(2, $model1->Count,          'Value count should be correct');
+
+		// Given a search for 'green' with 1 facet............................................
+		$r = $s->search(array('q' => 'green'));
+		$this->assertEquals(2, $r->TotalMatches,        'Should contain 2 products');
+		$this->assertNotEmpty($r->Facets,               'Facets should be present');
+		$this->assertEquals(1, $r->Facets->count(),     'There should be one facet');
+		$model = $r->Facets->first();
+		$this->assertEquals('By Model', $model->Label,  'Label should be correct');
+		$this->assertEquals(2, $model->Values->count(), 'Should be 3 values');
+		$model1 = $model->Values->first();
+		$this->assertEquals('ABC', $model1->Label,      'Value label should be correct');
+		$this->assertEquals(1, $model1->Count,          'Value count should be correct');
+
+		// Given a search with price and category facets......................................
+		Config::inst()->update('ShopSearch', 'facets', array(
+			'Model'     => 'By Model',
+			'Price'     => 'By Price',
+			'Parent,ProductCategories' => 'By Category', // This will facet across two fields
+		));
+
+		$r = $s->search(array('q' => ''));
+		$this->assertEquals(3, $r->Facets->count(),     'There should be 3 facets');
+		$price = $r->Facets->offsetGet(1);
+		$this->assertEquals(3, $price->Values->count(), 'There should be 3 prices');
+		$p1 = $price->Values->first();
+		$this->assertEquals('$5.00', $p1->Label,        'Price label should be formatted');
+		$cat = $r->Facets->last();
+		$this->assertEquals(3, $cat->Values->count(),   'There should be 3 categories');
+		$c1 = $cat->Values->first();
+		$c3 = $cat->Values->last();
+		$this->assertEquals('Farm Stuff', $c1->Label,   'Category label should work');
+		$this->assertEquals(2, $c1->Count,              'Category count should work');
+		$this->assertEquals(3, $c3->Count,              'Category counts should include the secondary many/many relation');
 	}
 }

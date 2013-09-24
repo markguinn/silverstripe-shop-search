@@ -30,9 +30,10 @@ class ShopSearchSolr extends SolrIndex
 	 * drivers that may not use the FullTextSearch module.
 	 *
 	 * @param array $data
+	 * @param array $facetSpec [optional]
 	 * @return ArrayData
 	 */
-	function searchFromVars(array $data) {
+	function searchFromVars(array $data, array $facetSpec=array()) {
 		$query = new SearchQuery();
 		$query->search($data['q']);
 		return $this->search($query);

@@ -10,7 +10,8 @@ interface ShopSearchAdapter
 {
 	/**
 	 * @param array $data
+	 * @param array $facetSpec [optional]
 	 * @return ArrayData - must contain at least 'Matches' with an list of data objects that match the search
 	 */
-	function searchFromVars(array $data);
+	function searchFromVars(array $data, array $facetSpec=array());
 }

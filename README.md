@@ -19,7 +19,7 @@ TODO:
 - Better field selection for search
 - Define filters manually or based on available variations/attributes
 - Faceting on price, etc.
-
+- Tests for Solr adapter
 
 DEVELOPERS:
 -----------

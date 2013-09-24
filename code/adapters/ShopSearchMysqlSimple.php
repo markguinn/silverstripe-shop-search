@@ -12,9 +12,10 @@ class ShopSearchMysqlSimple implements ShopSearchAdapter
 {
 	/**
 	 * @param array $data
+	 * @param array $facetSpec [optional]
 	 * @return ArrayData
 	 */
-	function searchFromVars(array $data) {
+	function searchFromVars(array $data, array $facetSpec=array()) {
 		$searchable = ShopSearch::get_searchable_classes();
 		$matches = new ArrayList;
 
@@ -39,7 +40,119 @@ class ShopSearchMysqlSimple implements ShopSearchAdapter
 
 		return new ArrayData(array(
 			'Matches'   => $matches,
+			'Facets'    => $this->buildFacets($matches, $facetSpec),
 		));
+	}
+
+
+	/**
+	 * This is super-slow. I'm assuming if you're using facets you
+	 * probably also ought to be using Solr or something else. Or
+	 * maybe you have unlimited time and can refactor this feature
+	 * and submit a pull request...
+	 *
+	 * Output - list of ArrayData in the format:
+	 *   Label - name of the facet
+	 *   Field - field name of the facet
+	 *   Values - SS_List of possible values for this facet
+	 *
+	 * @param ArrayList $matches
+	 * @param array $facetSpec
+	 * @return ArrayList
+	 */
+	protected function buildFacets(ArrayList $matches, array $facetSpec) {
+		if (empty($facetSpec) || !$matches || !$matches->count()) return new ArrayList();
+		$facets = array();
+
+		// set up the facets
+		foreach ($facetSpec as $field => $label) {
+			$facets[$field] = array(
+				'Label'    => $label,
+				'Field'    => $field,
+				'Values'   => array(), // this will be converted to arraylist below
+			);
+		}
+
+		// fill them in
+		foreach ($matches as $rec) {
+			foreach ($facets as $field => &$facet) {
+				try {
+					if (strpos($field, ',') !== false) {
+						// compound fields
+						$fields = explode(',', $field);
+						$vals = array();
+						foreach ($fields as $f) {
+							if ($rec->hasField($f)) {
+								$vals[] = $rec->obj($f);
+							} else {
+								$vals[] = $rec->$f();
+							}
+						}
+						$this->countFacetValue($vals, $facet);
+					} elseif ($rec->hasField($field)) {
+						// fields
+						$obj = $rec->obj($field);
+						$this->countFacetValue($obj, $facet);
+					} else {
+						// relations
+						$obj = $rec->$field();
+						$this->countFacetValue($obj, $facet);
+					}
+				} catch(Exception $e) {}
+			}
+		}
+
+		// convert values to arraylist
+		$out = new ArrayList();
+		foreach ($facets as $f) {
+			ksort($f['Values']);
+			$f['Values'] = new ArrayList($f['Values']);
+			$out->push(new ArrayData($f));
+		}
+
+		return $out;
+	}
+
+
+	/**
+	 * @param $obj
+	 * @param $facet
+	 */
+	protected function countFacetValue($obj, &$facet) {
+		if (is_array($obj) || $obj instanceof ArrayList || $obj instanceof DataList) {
+			foreach ($obj as $o) {
+				$this->countFacetValue($o, $facet);
+			}
+			return;
+		}
+
+		// figure out the right label
+		if (is_object($obj) && $obj->hasMethod('Nice')) {
+			$lbl = $obj->Nice();
+		} elseif (is_object($obj) && !empty($obj->Title)) {
+			$lbl = $obj->Title;
+		} else {
+			$lbl = (string)$obj;
+		}
+
+		// figure out the value for sorting
+		if (is_object($obj) && $obj->hasMethod('getAmount')) {
+			$val = $obj->getAmount();
+		} elseif (is_object($obj) && !empty($obj->ID)) {
+			$val = $obj->ID;
+		} else {
+			$val = (string)$obj;
+		}
+
+		// apply it
+		if (!isset($facet['Values'][$val])) {
+			$facet['Values'][$val] = new ArrayData(array(
+				'Label'     => $lbl,
+				'Count'     => 1,
+			));
+		} else {
+			$facet['Values'][$val]->Count++;
+		}
 	}
 
 
@@ -50,7 +163,7 @@ class ShopSearchMysqlSimple implements ShopSearchAdapter
 	 * @param String $dataClass - the class name
 	 * @return Array|null - names of the searchable fields, with filters if appropriate
 	 */
-	public function scaffoldSearchFields($dataClass) {
+	protected function scaffoldSearchFields($dataClass) {
 		$obj = singleton($dataClass);
 		$fields = null;
 		if($fieldSpecs = $obj->searchableFields()) {

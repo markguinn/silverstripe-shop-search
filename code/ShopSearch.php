@@ -11,8 +11,8 @@ class ShopSearch extends Object
 	/** @var string - class name of adapter class to use */
 	private static $adapter_class = 'ShopSearchMysqlSimple';
 
-	/** @var array - these classes will be added to the index */
-	private static $searchable = array('ProductCategory');
+	/** @var array - these classes will be added to the index - e.g. Category, Page, etc. */
+	private static $searchable = array();
 
 	/** @var bool - if true, all buyable models will be added to the index automatically  */
 	private static $buyables_are_searchable = true;
@@ -22,6 +22,14 @@ class ShopSearch extends Object
 
 	/** @var bool */
 	private static $suggest_enabled = true;
+
+	/**
+	 * @var array - default search facets (price, category, etc)
+	 *   Key    field name - can be a comma-delimited list of several fields (e.g. Parent,ProductCategories)
+	 *   Value  facet label - e.g. Search By Category - if the value is a relation or returns an array or
+	 *          list all values will be faceted individually
+	 */
+	private static $facets = array();
 
 	/**
 	 * @return array
@@ -75,8 +83,11 @@ class ShopSearch extends Object
 	 * @return ArrayData
 	 */
 	public function search(array $vars, $logSearch=true) {
+		$facets = $this->config()->get('facets');
+		if (!is_array($facets)) $facets = array();
+
 		// do the search
-		$results = self::adapter()->searchFromVars($vars);
+		$results = self::adapter()->searchFromVars($vars, $facets);
 
 		// massage the results a bit
 		if (!empty($vars['q']) && !$results->hasValue('Query')) $results->Query = $vars['q'];

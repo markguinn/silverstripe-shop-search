@@ -1,19 +1,41 @@
+ProductCategory:
+  c1:
+    Title: Farm Stuff
+  c2:
+    Title: Food
+  c3:
+    Title: Nerdy Stuff
+  c4:
+    Title: No Products Here
+
+
 Product:
   p1:
     Title: Big Book of Funny Stuff
+    Model: DEF
     Content: '<p>Abc def Blue Green red</p>'
     Price: 5
+    ParentID: =>ProductCategory.c3
   p2:
     Title: Green Pickles
+    Model: ABC
     Content: '<p>Dill or sweet or whatever</p>'
     Price: 10.50
+    ParentID: =>ProductCategory.c2
+    ProductCategories: =>ProductCategory.c3
   p3:
     Title: Red Truck
+    Model: ABC
     Content: '<p>Test content</p>'
     Price: 5000
+    ParentID: =>ProductCategory.c1
   p4:
     Title: Purple Cow
-    Price: 120
+    Model: ABC123
+    Price: 5
+    ParentID: =>ProductCategory.c1
+    ProductCategories: =>ProductCategory.c3, =>ProductCategory.c2
+
 
 Member:
   m1:
