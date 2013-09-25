@@ -23,9 +23,14 @@ class ShopSearch extends Object
 	/** @var bool */
 	private static $suggest_enabled = true;
 
+	/** @var string - these allow you to use different querystring params in you need to */
+	private static $qs_query = 'q';
+	private static $qs_filters = 'f';
+	private static $qs_parent_search = '__ps';
+
 	/**
 	 * @var array - default search facets (price, category, etc)
-	 *   Key    field name - can be a comma-delimited list of several fields (e.g. Parent,ProductCategories)
+	 *   Key    field name - e.g. Price - can be a VirtualFieldIndex field
 	 *   Value  facet label - e.g. Search By Category - if the value is a relation or returns an array or
 	 *          list all values will be faceted individually
 	 */
@@ -83,28 +88,36 @@ class ShopSearch extends Object
 	 * @return ArrayData
 	 */
 	public function search(array $vars, $logSearch=true) {
+		$qs_q   = $this->config()->get('qs_query');
+		$qs_f   = $this->config()->get('qs_filters');
+		$qs_ps  = $this->config()->get('qs_parent_search');
 		$facets = $this->config()->get('facets');
 		if (!is_array($facets)) $facets = array();
 
 		// do the search
-		$results = self::adapter()->searchFromVars($vars, $facets);
+		$keywords = !empty($vars[$qs_q]) ? $vars[$qs_q] : '';
+		$filters  = !empty($vars[$qs_f]) ? $vars[$qs_f] : array();
+		$results  = self::adapter()->searchFromVars($keywords, $filters, $facets);
 
 		// massage the results a bit
-		if (!empty($vars['q']) && !$results->hasValue('Query')) $results->Query = $vars['q'];
+		if (!empty($keywords) && !$results->hasValue('Query')) $results->Query = $vars[$qs_q];
 		if (!$results->hasValue('TotalMatches')) $results->TotalMatches = $results->Matches->count();
 		// TODO: filters
+
 		// TODO: Paging
 		// TODO: don't log multiple times for paging
 
 		// save the log record
-		if ($logSearch && $results->Query) {
+		if ($logSearch && (!empty($keywords) || !empty($filters))) {
 			$log = new SearchLog(array(
 				'Query'         => strtolower($results->Query),
 				'NumResults'    => $results->TotalMatches,
 				'MemberID'      => Member::currentUserID(),
-				// TODO: filters
+				'Filters'       => !empty($filters) ? json_encode($filters) : null,
+				'ParentSearchID'=> !empty($vars[$qs_ps]) ? $vars[$qs_ps] : 0,
 			));
 			$log->write();
+			$results->SearchLogID = $log->ID;
 		}
 
 		return $results;

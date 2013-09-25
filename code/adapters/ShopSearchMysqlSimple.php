@@ -11,30 +11,51 @@
 class ShopSearchMysqlSimple implements ShopSearchAdapter
 {
 	/**
-	 * @param array $data
+	 * @param string $keywords
+	 * @param array $filters [optional]
 	 * @param array $facetSpec [optional]
 	 * @return ArrayData
 	 */
-	function searchFromVars(array $data, array $facetSpec=array()) {
+	function searchFromVars($keywords, array $filters=array(), array $facetSpec=array()) {
 		$searchable = ShopSearch::get_searchable_classes();
 		$matches = new ArrayList;
 
 		foreach ($searchable as $className) {
+			$sing = singleton($className);
+			$list = DataObject::get($className);
+
 			// get searchable fields
-			$fields = $this->scaffoldSearchFields($className);
+			$keywordFields = $this->scaffoldSearchFields($className);
 
 			// convert that list into something we can pass to Datalist::filter
-			$params = array();
-			if (!empty($data['q'])) {
-				foreach($fields as $searchField) {
+			$keywordFilter = array();
+			if (!empty($keywords)) {
+				foreach($keywordFields as $searchField) {
 					$name = (strpos($searchField, ':') !== FALSE) ? $searchField : "$searchField:PartialMatch";
-					$params[$name] = $data['q'];
+					$keywordFilter[$name] = $keywords;
+				}
+			}
+			if (count($keywordFilter) > 0) $list = $list->filterAny($keywordFilter);
+
+			// add in any other filters
+			if (!empty($filters)) {
+				foreach ($filters as $filterField => $filterVal) {
+					// If they gave us an array, it needs to be an OR filter, otherwise just add it to the stack
+//					if (is_array($filterVal)) {
+//						$orFilter = array();
+//						foreach ($filterVal as $val) {
+//							$orFilter += $this->processFilterField($sing, $filterField, $val);
+//							Debug::dump(array($filterVal, $val, $orFilter));
+//						}
+//						$list = $list->filterAny($orFilter);
+//					} else {
+						$list = $list->filter($this->processFilterField($sing, $filterField, $filterVal));
+//					}
 				}
 			}
 
+//			Debug::dump($list->sql());
 			// add any matches to the big list
-			$list = DataObject::get($className);
-			if (count($params) > 0) $list = $list->filterAny($params);
 			$matches->merge($list);
 		}
 
@@ -42,6 +63,35 @@ class ShopSearchMysqlSimple implements ShopSearchAdapter
 			'Matches'   => $matches,
 			'Facets'    => $this->buildFacets($matches, $facetSpec),
 		));
+	}
+
+
+	/**
+	 * @param DataObject $rec
+	 * @param string     $filterField
+	 * @param mixed      $filterVal
+	 * @return array - returns the new filter added
+	 */
+	protected function processFilterField($rec, $filterField, $filterVal) {
+		if ($rec->hasExtension('VirtualFieldIndex') && ($spec = $rec->getVFISpec($filterField))) {
+			// First check for VFI fields
+			if ($spec['Type'] == VirtualFieldIndex::TYPE_LIST) {
+				// Lists have to be handled a little differently
+				$f = $rec->getVFIFieldName($filterField) . ':PartialMatch';
+				if (is_array($filterVal)) {
+					foreach ($filterVal as &$val) $val = '|' . $val . '|';
+					return array($f => $filterVal);
+				} else {
+					return array($f => '|' . $filterVal . '|');
+				}
+			} else {
+				// Simples are simple
+				return array($rec->getVFIFieldName($filterField) => $filterVal);
+			}
+		} elseif ($rec->dbObject($filterField)) {
+			// Next check for regular db fields
+			return array($filterField => $filterVal);
+		}
 	}
 
 
@@ -76,29 +126,52 @@ class ShopSearchMysqlSimple implements ShopSearchAdapter
 		// fill them in
 		foreach ($matches as $rec) {
 			foreach ($facets as $field => &$facet) {
-				try {
-					if (strpos($field, ',') !== false) {
-						// compound fields
-						$fields = explode(',', $field);
-						$vals = array();
-						foreach ($fields as $f) {
-							if ($rec->hasField($f)) {
-								$vals[] = $rec->obj($f);
-							} else {
-								$vals[] = $rec->$f();
-							}
+				// If the field is accessible via normal methods, including
+				// a user-defined getter, prefer that
+				$fieldValue = $rec->relObject($field);
+				if (is_null($fieldValue) && $rec->hasMethod($meth = "get{$field}")) $fieldValue = $rec->$meth();
+
+				// If not, look for a VFI field
+				if (!$fieldValue && $rec->hasExtension('VirtualFieldIndex')) $fieldValue = $rec->getVFI($field);
+
+				// If we found something, process it
+				if (!empty($fieldValue)) {
+					// normalize so that it's iterable
+					if (!is_array($fieldValue) && !$fieldValue instanceof SS_List) $fieldValue = array($fieldValue);
+
+					foreach ($fieldValue as $obj) {
+						if (empty($obj)) continue;
+
+						// figure out the right label
+						if (is_object($obj) && $obj->hasMethod('Nice')) {
+							$lbl = $obj->Nice();
+						} elseif (is_object($obj) && !empty($obj->Title)) {
+							$lbl = $obj->Title;
+						} else {
+							$lbl = (string)$obj;
 						}
-						$this->countFacetValue($vals, $facet);
-					} elseif ($rec->hasField($field)) {
-						// fields
-						$obj = $rec->obj($field);
-						$this->countFacetValue($obj, $facet);
-					} else {
-						// relations
-						$obj = $rec->$field();
-						$this->countFacetValue($obj, $facet);
+
+						// figure out the value for sorting
+						if (is_object($obj) && $obj->hasMethod('getAmount')) {
+							$val = $obj->getAmount();
+						} elseif (is_object($obj) && !empty($obj->ID)) {
+							$val = $obj->ID;
+						} else {
+							$val = (string)$obj;
+						}
+
+						// Tally the value in the facets
+						if (!isset($facet['Values'][$val])) {
+							$facet['Values'][$val] = new ArrayData(array(
+								'Label'     => $lbl,
+								'Value'     => $val,
+								'Count'     => 1,
+							));
+						} else {
+							$facet['Values'][$val]->Count++;
+						}
 					}
-				} catch(Exception $e) {}
+				}
 			}
 		}
 
@@ -111,48 +184,6 @@ class ShopSearchMysqlSimple implements ShopSearchAdapter
 		}
 
 		return $out;
-	}
-
-
-	/**
-	 * @param $obj
-	 * @param $facet
-	 */
-	protected function countFacetValue($obj, &$facet) {
-		if (is_array($obj) || $obj instanceof ArrayList || $obj instanceof DataList) {
-			foreach ($obj as $o) {
-				$this->countFacetValue($o, $facet);
-			}
-			return;
-		}
-
-		// figure out the right label
-		if (is_object($obj) && $obj->hasMethod('Nice')) {
-			$lbl = $obj->Nice();
-		} elseif (is_object($obj) && !empty($obj->Title)) {
-			$lbl = $obj->Title;
-		} else {
-			$lbl = (string)$obj;
-		}
-
-		// figure out the value for sorting
-		if (is_object($obj) && $obj->hasMethod('getAmount')) {
-			$val = $obj->getAmount();
-		} elseif (is_object($obj) && !empty($obj->ID)) {
-			$val = $obj->ID;
-		} else {
-			$val = (string)$obj;
-		}
-
-		// apply it
-		if (!isset($facet['Values'][$val])) {
-			$facet['Values'][$val] = new ArrayData(array(
-				'Label'     => $lbl,
-				'Count'     => 1,
-			));
-		} else {
-			$facet['Values'][$val]->Count++;
-		}
 	}
 
 

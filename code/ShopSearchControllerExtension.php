@@ -22,8 +22,31 @@ class ShopSearchControllerExtension extends Extension
 	 * @return mixed
 	 */
 	public function results(array $data) {
-		if (!isset($data['q'])) $this->httpError(400);
+		$qs_q   = Config::inst()->get('ShopSearch', 'qs_query');
+		$qs_f   = Config::inst()->get('ShopSearch', 'qs_filters');
+		$qs_ps  = Config::inst()->get('ShopSearch', 'qs_parent_search');
+		if (!isset($data[$qs_q])) $this->owner->httpError(400);
+
+		// do the search
 		$results = ShopSearch::inst()->search($data);
+
+		// add links for any facets
+		if ($results->Facets && $results->Facets->count()) {
+			$baseLink = $this->owner->getRequest()->getURL(false);
+			foreach ($results->Facets as $facet) {
+				foreach ($facet->Values as $value) {
+					// TODO: Handle more than on on the same facet with an array
+					$params = $data + array(
+						$qs_f . '[' . $facet->getField('Field') . ']'  => $value->getField('Value'),
+						$qs_ps                                         => $results->SearchLogID,
+					);
+					unset($params['url']);
+					$value->Link = $baseLink . '?' . http_build_query($params);
+				}
+			}
+		}
+
+		// a little more output management
 		$results->Title = _t('ShopSearch.SearchResults', 'Search Results');
 		$results->Results = $results->Matches;
 		return $this->owner->customise($results)->renderWith(array('Page_results', 'Page'));

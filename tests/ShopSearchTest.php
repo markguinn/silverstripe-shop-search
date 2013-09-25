@@ -12,13 +12,30 @@ class ShopSearchTest extends SapphireTest
 	static $fixture_file = 'ShopSearchTest.yml';
 
 	function setUpOnce() {
-		// TODO: may need to normalize a bit more config here
+		// normalize the configuration
+		Config::inst()->update('ShopSearch', 'buyables_are_searchable', false);
+		Config::inst()->remove('ShopSearch', 'searchable');
+		Config::inst()->update('ShopSearch', 'searchable', array('Product'));
 		Config::inst()->update('ShopSearch', 'adapter_class', 'ShopSearchMysqlSimple');
 		Config::inst()->remove('Product', 'searchable_fields');
 		Config::inst()->update('Product', 'searchable_fields', array('Title', 'Content'));
 		Config::inst()->remove('ShopSearch', 'facets');
+
+		$p = singleton('Product');
+		if (!$p->hasExtension('VirtualFieldIndex')) {
+			Product::add_extension('VirtualFieldIndex');
+			Config::inst()->remove('VirtualFieldIndex', 'vfi_spec');
+			Config::inst()->update('VirtualFieldIndex', 'vfi_spec', array(
+				'Product' => array(
+					'Price'     => 'sellingPrice',
+					'Category'  => array('Parent', 'ProductCategories'),
+				),
+			));
+		}
+
 		parent::setUpOnce();
 	}
+
 
 	function testResults() {
 		// Searching for nothing should return all results
@@ -42,10 +59,8 @@ class ShopSearchTest extends SapphireTest
 			array('Title'=>'Big Book of Funny Stuff'),
 			array('Title'=>'Green Pickles'),
 		), $r->Matches);
-
-		// TODO: search with filters
-		// TODO: paging
 	}
+
 
 	function testLogging() {
 		/** @var Member $m1 */
@@ -75,6 +90,7 @@ class ShopSearchTest extends SapphireTest
 		$this->assertEquals($m1->ID, $log->MemberID);
 		$m1->logOut();
 	}
+
 
 	function testSuggestions() {
 		// Initially should not suggest anything
@@ -107,6 +123,7 @@ class ShopSearchTest extends SapphireTest
 		$this->assertEquals('red', $r[0]);
 		$this->assertEquals('green', $r[1]);
 	}
+
 
 	/**
 	 * Sorry, this one will be messy if you add new products to the fixture
@@ -145,7 +162,7 @@ class ShopSearchTest extends SapphireTest
 		Config::inst()->update('ShopSearch', 'facets', array(
 			'Model'     => 'By Model',
 			'Price'     => 'By Price',
-			'Parent,ProductCategories' => 'By Category', // This will facet across two fields
+			'Category'  => 'By Category',
 		));
 
 		$r = $s->search(array('q' => ''));
@@ -162,4 +179,87 @@ class ShopSearchTest extends SapphireTest
 		$this->assertEquals(2, $c1->Count,              'Category count should work');
 		$this->assertEquals(3, $c3->Count,              'Category counts should include the secondary many/many relation');
 	}
+
+
+	function testFilters() {
+		VirtualFieldIndex::build('Product');
+
+		// one filter
+		$r = ShopSearch::inst()->search(array(
+			'f' => array(
+				'Model' => 'ABC'
+			)
+		));
+		$this->assertEquals(2, $r->TotalMatches,                'Should contain 2 products');
+		$this->assertEquals('ABC', $r->Matches->first()->Model, 'Should actually match');
+
+		// two filters
+		$r = ShopSearch::inst()->search(array(
+			'f' => array(
+				'Model' => 'ABC',
+				'Price' => 10.50,
+			)
+		));
+		$this->assertEquals(1, $r->TotalMatches,                'Should contain 1 product');
+		$this->assertEquals('ABC', $r->Matches->first()->Model, 'Should actually match');
+		$this->assertEquals(10.5, $r->Matches->first()->sellingPrice(), 'Should actually match');
+
+		// filter on category
+		$r = ShopSearch::inst()->search(array(
+			'f' => array(
+				'Category' => $this->idFromFixture('ProductCategory', 'c3'),
+			)
+		));
+		$this->assertEquals(3, $r->TotalMatches,                'Should contain 3 products');
+
+		// filter on multiple categories
+		$r = ShopSearch::inst()->search(array(
+			'f' => array(
+				'Category' => array(
+					$this->idFromFixture('ProductCategory', 'c1'),
+					$this->idFromFixture('ProductCategory', 'c3'),
+				),
+			),
+		));
+		$this->assertEquals(4, $r->TotalMatches,                'Should contain all products');
+
+		// TODO: 'tiered' pricing (ie. $5-10, $10-20, etc)
+	}
+
+
+	function testVFI() {
+		// Given a simple definition, spec should be properly fleshed out
+		$spec = VirtualFieldIndex::get_vfi_spec('Product');
+		$this->assertEquals('simple', $spec['Price']['Type']);
+		$this->assertEquals('all', $spec['Price']['DependsOn']);
+		$this->assertEquals('sellingPrice', $spec['Price']['Source']);
+
+		// Given a simple array definition, spec should be properly fleshed out
+		$spec = VirtualFieldIndex::get_vfi_spec('Product');
+		$this->assertEquals('list', $spec['Category']['Type']);
+		$this->assertEquals('all', $spec['Category']['DependsOn']);
+		$this->assertEquals('Parent', $spec['Category']['Source'][0]);
+
+		// build the vfi just in case
+		VirtualFieldIndex::build('Product');
+		$p = $this->objFromFixture('Product', 'p4');
+		$cats = new ArrayList(array(
+			$this->objFromFixture('ProductCategory', 'c1'),
+			$this->objFromFixture('ProductCategory', 'c2'),
+			$this->objFromFixture('ProductCategory', 'c3'),
+		));
+
+		// vfi fields should be present and correct
+		$this->assertTrue($p->hasField('VFI_Price'),    'Price index exists');
+		$this->assertEquals(5, $p->VFI_Price,           'Price is correct');
+		$this->assertTrue($p->hasField('VFI_Category'), 'Category index exists');
+		$this->assertEquals('>ProductCategory|' . implode('|', $cats->column('ID')) . '|', $p->VFI_Category,
+			'Category index is correct');
+
+		// vfi accessors work
+		$this->assertEquals(5, $p->getVFI('Price'),         'Simple getter works');
+		$this->assertEquals($cats->toArray(), $p->getVFI('Category'),  'List getter works');
+		$this->assertNull($p->getVFI('NonExistentField'),   'Non existent field should return null');
+	}
+
 }

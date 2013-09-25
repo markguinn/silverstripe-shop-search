@@ -29,13 +29,14 @@ class ShopSearchSolr extends SolrIndex
 	 * and the SearchQuery class. It allows us to have other
 	 * drivers that may not use the FullTextSearch module.
 	 *
-	 * @param array $data
+	 * @param string $keywords
+	 * @param array $filters [optional]
 	 * @param array $facetSpec [optional]
 	 * @return ArrayData
 	 */
-	function searchFromVars(array $data, array $facetSpec=array()) {
+	function searchFromVars($keywords, array $filters=array(), array $facetSpec=array()) {
 		$query = new SearchQuery();
-		$query->search($data['q']);
+		$query->search($keywords);
 		return $this->search($query);
 	}
 }
