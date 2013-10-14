@@ -27,6 +27,7 @@ class ShopSearch extends Object
 	private static $qs_query = 'q';
 	private static $qs_filters = 'f';
 	private static $qs_parent_search = '__ps';
+	private static $qs_title = '__t';
 
 	/**
 	 * @var array - default search facets (price, category, etc)
@@ -62,6 +63,27 @@ class ShopSearch extends Object
 	}
 
 	/**
+	 * Returns an array of categories suitable for a dropdown menu
+	 * TODO: cache this
+	 *
+	 * @param int $parentID [optional]
+	 * @param string $prefix [optional]
+	 * @return array
+	 * @static
+	 */
+	public static function get_category_hierarchy($parentID = 0, $prefix = '') {
+		$out = array();
+		$cats = ProductCategory::get()->filter('ParentID', $parentID)->sort('Sort');
+
+		foreach ($cats as $cat) {
+			$out[$cat->ID] = $prefix . $cat->Title;
+			$out += self::get_category_hierarchy($cat->ID, $prefix . $cat->Title . ' > ');
+		}
+
+		return $out;
+	}
+
+	/**
 	 * @return ShopSearchAdapter
 	 */
 	public static function adapter() {
@@ -91,6 +113,7 @@ class ShopSearch extends Object
 		$qs_q   = $this->config()->get('qs_query');
 		$qs_f   = $this->config()->get('qs_filters');
 		$qs_ps  = $this->config()->get('qs_parent_search');
+		$qs_t   = $this->config()->get('qs_title');
 		$facets = $this->config()->get('facets');
 		if (!is_array($facets)) $facets = array();
 
@@ -100,9 +123,9 @@ class ShopSearch extends Object
 		$results  = self::adapter()->searchFromVars($keywords, $filters, $facets);
 
 		// massage the results a bit
-		if (!empty($keywords) && !$results->hasValue('Query')) $results->Query = $vars[$qs_q];
+		if (!empty($keywords) && !$results->hasValue('Query')) $results->Query = $keywords;
+		if (!empty($filters) && !$results->hasValue('Filters')) $results->Filters = new ArrayData($filters);
 		if (!$results->hasValue('TotalMatches')) $results->TotalMatches = $results->Matches->count();
-		// TODO: filters
 
 		// TODO: Paging
 		// TODO: don't log multiple times for paging
@@ -111,6 +134,8 @@ class ShopSearch extends Object
 		if ($logSearch && (!empty($keywords) || !empty($filters))) {
 			$log = new SearchLog(array(
 				'Query'         => strtolower($results->Query),
+				'Title'         => !empty($vars[$qs_t]) ? $vars[$qs_t] : '',
+				'Link'          => Controller::curr()->getRequest()->getURL(true), // I'm not 100% happy with this, but can't think of a better way
 				'NumResults'    => $results->TotalMatches,
 				'MemberID'      => Member::currentUserID(),
 				'Filters'       => !empty($filters) ? json_encode($filters) : null,
@@ -118,6 +143,7 @@ class ShopSearch extends Object
 			));
 			$log->write();
 			$results->SearchLogID = $log->ID;
+			$results->SearchBreadcrumbs = $log->getBreadcrumbs();
 		}
 
 		return $results;

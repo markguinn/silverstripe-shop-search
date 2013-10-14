@@ -14,6 +14,15 @@ REQUIREMENTS:
 	- Some will be boolean and others enumeration of values
 
 
+INSTALLATION:
+-------------
+1. Install via composer
+2. Make adjustments to configuration via yml. May want to change adapter
+   class, searchable classes, and facets.
+3. If using VirtualFieldIndex class for faceting with mysql, enable a
+   cron job for `dev/tasks/BuildVFI`.
+
+
 TODO:
 -----
 - Better field selection for search

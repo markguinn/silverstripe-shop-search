@@ -25,6 +25,7 @@ class ShopSearchControllerExtension extends Extension
 		$qs_q   = Config::inst()->get('ShopSearch', 'qs_query');
 		$qs_f   = Config::inst()->get('ShopSearch', 'qs_filters');
 		$qs_ps  = Config::inst()->get('ShopSearch', 'qs_parent_search');
+		$qs_t   = Config::inst()->get('ShopSearch', 'qs_title');
 		if (!isset($data[$qs_q])) $this->owner->httpError(400);
 
 		// do the search
@@ -35,12 +36,16 @@ class ShopSearchControllerExtension extends Extension
 			$baseLink = $this->owner->getRequest()->getURL(false);
 			foreach ($results->Facets as $facet) {
 				foreach ($facet->Values as $value) {
-					// TODO: Handle more than on on the same facet with an array
-					$params = $data + array(
-						$qs_f . '[' . $facet->getField('Field') . ']'  => $value->getField('Value'),
-						$qs_ps                                         => $results->SearchLogID,
-					);
-					unset($params['url']);
+                    // make a copy of the existing get params
+					$params = array_merge($data, array($qs_ps => $results->SearchLogID));
+                    unset($params['url']);
+
+                    // add the filter for this value, allowing for other values as well (is that what we want?)
+                    if (!isset($params[$qs_f])) $params[$qs_f] = array();
+                    $params[$qs_f][$facet->getField('Field')] = $value->getField('Value');
+					$params[$qs_t] = $facet->getField('Label') . ': ' . $value->getField('Label');
+
+					// build a new link
 					$value->Link = $baseLink . '?' . http_build_query($params);
 				}
 			}

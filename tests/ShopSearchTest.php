@@ -89,6 +89,42 @@ class ShopSearchTest extends SapphireTest
 		$this->assertEquals(1, $log->NumResults);
 		$this->assertEquals($m1->ID, $log->MemberID);
 		$m1->logOut();
+
+		// Refining a search several times should leave us a crumb trail
+		$s = ShopSearch::inst();
+		$r = $s->search(array('q' => 'green'));
+		$this->assertNotNull($r->SearchBreadcrumbs,                                 'Search crumb exists');
+		$this->assertEquals(1, $r->SearchBreadcrumbs->count(),                      'Search crumb should have 1 entry');
+		$this->assertEquals('Search: green', $r->SearchBreadcrumbs->first()->Title, 'Search crumb label should be correct');
+
+		$r = $s->search(array(
+			'q'     => 'green',
+			'__ps'  => $r->SearchLogID,
+			'__t'   => 'Model: ABC',
+			'f' => array(
+				'Model' => 'ABC',
+			),
+		));
+		$this->assertEquals(2, $r->SearchBreadcrumbs->count(),                      'Search crumb should have 2 entries');
+		$this->assertEquals('Search: green', $r->SearchBreadcrumbs->first()->Title, 'Search crumb should contain previous search');
+		$this->assertEquals('Model: ABC', $r->SearchBreadcrumbs->last()->Title,     'Search crumb should contain current search');
+
+		$r = $s->search(array(
+			'q'     => 'green',
+			'__ps'  => $r->SearchLogID,
+			'__t'   => 'Price: $10.50',
+			'f' => array(
+				'Model' => 'ABC',
+				'Price' => '10.50',
+			),
+		));
+		$this->assertEquals(3, $r->SearchBreadcrumbs->count(),                       'Search crumb should have 3 entries');
+		$this->assertEquals('Search: green', $r->SearchBreadcrumbs->first()->Title,  'Search crumb should contain first search');
+		$this->assertEquals('Model: ABC', $r->SearchBreadcrumbs->offsetGet(1)->Title,'Search crumb should contain previous search');
+		$this->assertEquals('Price: $10.50', $r->SearchBreadcrumbs->last()->Title,   'Search crumb should contain current search');
+
+		$r = $s->search(array('q' => 'purple'));
+		$this->assertEquals(1, $r->SearchBreadcrumbs->count(),                       'Search crumb should reset');
 	}
 
 

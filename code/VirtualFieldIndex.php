@@ -47,18 +47,18 @@ class VirtualFieldIndex extends DataExtension
 	/** @var array - central config for all models */
 	private static $vfi_spec = array();
 
-	/** @var array - used to rebuild the indexes */
-	protected static $classes_with_vfi = array();
-
 	/** @var bool - used to prevent an infinite loop in onBeforeWrite */
 	protected $isRebuilding = false;
 
-	/**
-	 * Called when this extension is added to a particular class
-	 */
-	public static function add_to_class($class, $extensionClass, $args = null) {
-		self::$classes_with_vfi[] = $class;
-	}
+
+    /**
+     * @return array
+     */
+    public static function get_classes_with_vfi() {
+        $vfi_def = Config::inst()->get('VirtualFieldIndex', 'vfi_spec');
+        if (!$vfi_def || !is_array($vfi_def)) return array();
+        return array_keys($vfi_def);
+    }
 
 	/**
 	 * Define extra db fields and indexes.
@@ -131,7 +131,7 @@ class VirtualFieldIndex extends DataExtension
 			$list = DataObject::get($class);
 			foreach ($list as $rec) $rec->rebuildVFI();
 		} else {
-			foreach (self::$classes_with_vfi as $c) self::build($c);
+			foreach (self::get_classes_with_vfi() as $c) self::build($c);
 		}
 	}
 
