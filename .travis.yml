@@ -17,6 +17,7 @@ before_script:
 - git clone git://github.com/burnbright/silverstripe-bootstrap.git ss/themes/bootstrap
 - git clone git://github.com/burnbright/silverstripe-bootstrap-shop.git ss/themes/bootstrap_shop
 - git clone https://github.com/silverstripe-labs/silverstripe-sqlite3.git ss/sqlite
+- git clone https://github.com/silverstripe-labs/silverstripe-fulltextsearch.git ss/fulltextsearch
 
 - mv ~/build/markguinn/silverstripe-shop-search ss/shop_search
 
