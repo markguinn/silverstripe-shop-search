@@ -1,6 +1,8 @@
 Improved Search for Silverstripe Shop Submodule
 ===============================================
 
+[![Build Status](https://secure.travis-ci.org/markguinn/silverstripe-shop-search.png)](http://travis-ci.org/markguinn/silverstripe-shop-search)
+
 This is very, very early stages. Probably not suitable for use yet.
 Full features + documentation coming soon. Check the comments for now.
 
