@@ -23,11 +23,15 @@ class ShopSearch extends Object
 	/** @var bool */
 	private static $suggest_enabled = true;
 
+	/** @var bool */
+	private static $search_as_you_type_enabled = true;
+
 	/** @var string - these allow you to use different querystring params in you need to */
-	private static $qs_query = 'q';
-	private static $qs_filters = 'f';
+	private static $qs_query    = 'q';
+	private static $qs_filters  = 'f';
 	private static $qs_parent_search = '__ps';
-	private static $qs_title = '__t';
+	private static $qs_title    = '__t';
+	private static $qs_source   = '__src'; // used to log searches from search-as-you-type
 
 	/**
 	 * @var array - default search facets (price, category, etc)
@@ -120,6 +124,7 @@ class ShopSearch extends Object
 		// do the search
 		$keywords = !empty($vars[$qs_q]) ? $vars[$qs_q] : '';
 		$filters  = !empty($vars[$qs_f]) ? $vars[$qs_f] : array();
+		foreach ($filters as $k => $v) if (empty($v)) unset($filters[$k]);
 		$results  = self::adapter()->searchFromVars($keywords, $filters, $facets);
 
 		// massage the results a bit

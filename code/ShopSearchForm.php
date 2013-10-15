@@ -14,8 +14,8 @@ class ShopSearchForm extends Form
 	/** @var string - this probably ought to be overridden with a vfi or solr facet unless you're products are only in one category */
 	private static $category_field = 'f[ParentID]';
 
-	/** @var bool - setting to true will mean the category dropdwon will have no empty option */
-	private static $remove_all_products_from_categories = false;
+	/** @var string - setting to 'NONE' will mean the category dropdwon will have no empty option */
+	private static $category_empty_string = 'All Products';
 
 
 	/**
@@ -30,12 +30,12 @@ class ShopSearchForm extends Form
 
 		$fields = new FieldList($searchField);
 		if (!Config::inst()->get('ShopSearchForm', 'disable_category_dropdown')) {
-			$catColumn = Config::inst()->get('ShopSearchForm', 'category_field');
-			$cats = ShopSearch::get_category_hierarchy();
+			$cats     = ShopSearch::get_category_hierarchy();
+			$catField = new DropdownField(self::get_category_field(), '', $cats);
 
-			$catField = new DropdownField($catColumn, '', $cats);
-			if (!Config::inst()->get('ShopSearchForm', '$remove_all_products_from_categories')) {
-				$catField->setEmptyString(_t('ShopSearch.ALLPRODUCTS', 'All Products'));
+			$emptyString = Config::inst()->get('ShopSearchForm', 'category_empty_string');
+			if ($emptyString !== 'NONE') {
+				$catField->setEmptyString(_t('ShopSearch.'.$emptyString, $emptyString));
 			}
 
 			$fields->push($catField);
@@ -46,10 +46,20 @@ class ShopSearchForm extends Form
 		$this->setFormMethod('GET');
 		$this->disableSecurityToken();
 
+		Requirements::css(SHOP_SEARCH_FOLDER . '/css/ShopSearch.css');
+
 		if (Config::inst()->get('ShopSearch', 'suggest_enabled')) {
 			Requirements::javascript(THIRDPARTY_DIR . '/jquery-ui/jquery-ui.js');
 			Requirements::css(THIRDPARTY_DIR . '/jquery-ui-themes/smoothness/jquery-ui.css');
 			Requirements::javascript(SHOP_SEARCH_FOLDER . '/javascript/ShopSearch.js');
 		}
+	}
+
+
+	/**
+	 * @return string
+	 */
+	public static function get_category_field() {
+		return Config::inst()->get('ShopSearchForm', 'category_field');
 	}
 }

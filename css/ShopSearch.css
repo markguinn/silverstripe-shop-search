@@ -1,0 +1,66 @@
+/* suggestions dropdown ----------------------------------------------------------- */
+
+.shop-search.ui-autocomplete .ui-autocomplete-category {
+	font-weight: bold;
+	border-top: 1px solid #888;
+	padding: .2em .4em;
+	margin-top: .5em;
+}
+.shop-search.ui-autocomplete .ui-autocomplete-category:first-child {
+	border-top: none;
+	margin-top: 0;
+}
+
+
+.shop-search.ui-autocomplete .product {
+	display: block;
+	position: relative;
+}
+.shop-search.ui-autocomplete .product span {
+	display: block;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.shop-search.ui-autocomplete .product span.desc {
+	font-size: 0.8em;
+	font-style: italic;
+}
+.shop-search.ui-autocomplete .product img {
+	max-width: 60px;
+	position: absolute;
+	left: 3px;
+	top: 3px;
+}
+.shop-search.ui-autocomplete .product.thumb {
+	padding-left: 70px;
+	min-height: 60px;
+}
+
+
+/* make the form full inline ------------------------------------------------------ */
+
+#ShopSearchForm_SearchForm fieldset,
+#ShopSearchForm_SearchForm div {
+	float: left;
+	margin: 0;
+}
+
+#ShopSearchForm_SearchForm select {
+	width: auto;
+	max-width: 120px;
+}
+
+#ShopSearchForm_SearchForm .Actions {
+	margin-left: 3px;
+}
+
+/* clearfix the form itself */
+#ShopSearchForm_SearchForm:before,
+#ShopSearchForm_SearchForm:after {
+	content: " ";
+	display: table;
+}
+#ShopSearchForm_SearchForm:after {
+	clear: both;
+}
