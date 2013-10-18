@@ -25,7 +25,7 @@
  *
  * The above will create two new fields on Product: VFI_Price and VFI_Categories.
  * These will be updated whenever the object is changed and can be triggered via
- * a build task (RebuildVirtualFieldIndexes).
+ * a build task (dev/tasks/BuildVFI).
  *
  * The categories index will contain the merging of results from ParentID and
  * ProductCategories.ID in the form of a comma-delimited list.

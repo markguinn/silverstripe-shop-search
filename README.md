@@ -33,6 +33,7 @@ TODO:
 - Tests for Solr adapter
 - Figure out how to handle category filtering and parent/sub cats
 
+
 DEVELOPERS:
 -----------
 * Mark Guinn - mark@adaircreative.com

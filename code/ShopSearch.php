@@ -236,7 +236,7 @@ class ShopSearch extends Object
 				$params = array_merge($baseParams, array());
 				if (!isset($params[$qs_f])) $params[$qs_f] = array();
 				$params[$qs_f][$facet->Source] = 'RANGEFACETVALUE';
-				$params[$qs_t] = 'Price Range';
+				$params[$qs_t] = $facet->Label . ': RANGEFACETLABEL';
 				$facet->Link = $baseLink . '?' . http_build_query($params);
 			} else {
 				foreach ($facet->Values as $value) {
