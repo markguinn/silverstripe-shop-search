@@ -85,6 +85,12 @@ class ShopSearch extends Object
 		$out = array();
 		$cats = ProductCategory::get()->filter('ParentID', $parentID)->sort('Sort');
 
+		// If there is a single parent category (usually "Products" or something), we
+		// probably don't want that in the hierarchy.
+		if ($parentID == 0 && $cats->count() == 1) {
+			return self::get_category_hierarchy($cats->first()->ID, $prefix);
+		}
+
 		foreach ($cats as $cat) {
 			$out[$cat->ID] = $prefix . $cat->Title;
 			$out += self::get_category_hierarchy($cat->ID, $prefix . $cat->Title . ' > ');
