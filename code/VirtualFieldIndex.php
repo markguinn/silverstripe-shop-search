@@ -15,6 +15,7 @@
  *         Type: simple
  *         Source: sellingPrice
  *         DependsOn: BasePrice
+ *         DBField: Currency
  *       Categories:
  *         Type: list
  *         DependsOn: all

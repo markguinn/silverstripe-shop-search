@@ -100,6 +100,13 @@
 				return li.appendTo(ul);
 			};
 		}
+
+
+		// Facet checkboxes
+		$('.facet-checkbox label, .facet-checkbox input[type=checkbox]').click(function(){
+			var url = $(this).closest('label').data('url');
+			if (url) document.location.href = url;
+		});
 	});
 
 }(jQuery, this, this.document));

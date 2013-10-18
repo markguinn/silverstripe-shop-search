@@ -73,8 +73,8 @@ class ShopSearchMysqlSimple implements ShopSearchAdapter
 	 * @return array - returns the new filter added
 	 */
 	protected function processFilterField($rec, $filterField, $filterVal) {
+		// First check for VFI fields
 		if ($rec->hasExtension('VirtualFieldIndex') && ($spec = $rec->getVFISpec($filterField))) {
-			// First check for VFI fields
 			if ($spec['Type'] == VirtualFieldIndex::TYPE_LIST) {
 				// Lists have to be handled a little differently
 				$f = $rec->getVFIFieldName($filterField) . ':PartialMatch';
@@ -86,12 +86,22 @@ class ShopSearchMysqlSimple implements ShopSearchAdapter
 				}
 			} else {
 				// Simples are simple
-				return array($rec->getVFIFieldName($filterField) => $filterVal);
+				$filterField = $rec->getVFIFieldName($filterField);
 			}
-		} elseif ($rec->dbObject($filterField)) {
-			// Next check for regular db fields
+		}
+
+		// Next check for regular db fields
+		if ($rec->dbObject($filterField)) {
+			// Is it a range value?
+			if (preg_match('/^RANGE\~(.+)\~(.+)$/', $filterVal, $m)) {
+				$filterField .= ':Between';
+				$filterVal = array_slice($m, 1, 2);
+			}
+
 			return array($filterField => $filterVal);
 		}
+
+		return array();
 	}
 
 
@@ -103,7 +113,8 @@ class ShopSearchMysqlSimple implements ShopSearchAdapter
 	 *
 	 * Output - list of ArrayData in the format:
 	 *   Label - name of the facet
-	 *   Field - field name of the facet
+	 *   Source - field name of the facet
+	 *   Type - one of the ShopSearch::FACET_TYPE_XXXX constants
 	 *   Values - SS_List of possible values for this facet
 	 *
 	 * @param ArrayList $matches
@@ -116,16 +127,40 @@ class ShopSearchMysqlSimple implements ShopSearchAdapter
 
 		// set up the facets
 		foreach ($facetSpec as $field => $label) {
-			$facets[$field] = array(
-				'Label'    => $label,
-				'Field'    => $field,
-				'Values'   => array(), // this will be converted to arraylist below
-			);
+			if (is_array($label)) {
+				$facets[$field] = $label;
+			} else {
+				$facets[$field] = array('Label' => $label);
+			}
+
+			if (empty($facets[$field]['Source'])) $facets[$field]['Source'] = $field;
+			if (empty($facets[$field]['Type']))  $facets[$field]['Type']  = ShopSearch::FACET_TYPE_LINK;
+
+			if (empty($facets[$field]['Values'])) {
+				$facets[$field]['Values'] = array();
+			} else {
+				$vals = $facets[$field]['Values'];
+				if (is_string($vals)) $vals = eval('return ' . $vals . ';');
+				$facets[$field]['Values'] = array();
+				foreach ($vals as $val => $lbl) {
+					$facets[$field]['Values'][$val] = new ArrayData(array(
+						'Label'     => $lbl,
+						'Value'     => $val,
+						'Count'     => 0,
+					));
+				}
+			}
 		}
 
 		// fill them in
 		foreach ($matches as $rec) {
 			foreach ($facets as $field => &$facet) {
+				// If it's a range facet, set up the min/max
+				if ($facet['Type'] == ShopSearch::FACET_TYPE_RANGE) {
+					if (isset($facet['RangeMin'])) $facet['MinValue'] = $facet['RangeMin'];
+					if (isset($facet['RangeMax'])) $facet['MaxValue'] = $facet['RangeMax'];
+				}
+
 				// If the field is accessible via normal methods, including
 				// a user-defined getter, prefer that
 				$fieldValue = $rec->relObject($field);
@@ -160,6 +195,24 @@ class ShopSearchMysqlSimple implements ShopSearchAdapter
 							$val = (string)$obj;
 						}
 
+						// if it's a range facet, calculate the min and max
+						if ($facet['Type'] == ShopSearch::FACET_TYPE_RANGE) {
+							if (!isset($facet['MinValue']) || $val < $facet['MinValue']) {
+								$facet['MinValue'] = $val;
+								$facet['MinLabel'] = $lbl;
+							}
+							if (!isset($facet['RangeMin']) || $val < $facet['RangeMin']) {
+								$facet['RangeMin'] = $val;
+							}
+							if (!isset($facet['MaxValue']) || $val > $facet['MaxValue']) {
+								$facet['MaxValue'] = $val;
+								$facet['MaxLabel'] = $lbl;
+							}
+							if (!isset($facet['RangeMax']) || $val > $facet['RangeMax']) {
+								$facet['RangeMax'] = $val;
+							}
+						}
+
 						// Tally the value in the facets
 						if (!isset($facet['Values'][$val])) {
 							$facet['Values'][$val] = new ArrayData(array(
@@ -167,7 +220,7 @@ class ShopSearchMysqlSimple implements ShopSearchAdapter
 								'Value'     => $val,
 								'Count'     => 1,
 							));
-						} else {
+						} elseif ($facet['Values'][$val]) {
 							$facet['Values'][$val]->Count++;
 						}
 					}

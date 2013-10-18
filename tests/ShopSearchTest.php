@@ -27,7 +27,8 @@ class ShopSearchTest extends SapphireTest
 			Config::inst()->remove('VirtualFieldIndex', 'vfi_spec');
 			Config::inst()->update('VirtualFieldIndex', 'vfi_spec', array(
 				'Product' => array(
-					'Price'     => 'sellingPrice',
+					'Price2'    => 'sellingPrice',
+					'Price'     => array('Source' => 'sellingPrice', 'DBField' => 'Currency', 'DependsOn' => 'BasePrice'),
 					'Category'  => array('Parent', 'ProductCategories'),
 				),
 			));
@@ -182,7 +183,7 @@ class ShopSearchTest extends SapphireTest
 		$this->assertEquals('ABC', $model1->Label,      'Value label should be correct');
 		$this->assertEquals(2, $model1->Count,          'Value count should be correct');
 
-		// Given a search for 'green' with 1 facet............................................
+		// Given a search for 'green' with 1 facet ............................................
 		$r = $s->search(array('q' => 'green'));
 		$this->assertEquals(2, $r->TotalMatches,        'Should contain 2 products');
 		$this->assertNotEmpty($r->Facets,               'Facets should be present');
@@ -194,7 +195,7 @@ class ShopSearchTest extends SapphireTest
 		$this->assertEquals('ABC', $model1->Label,      'Value label should be correct');
 		$this->assertEquals(1, $model1->Count,          'Value count should be correct');
 
-		// Given a search with price and category facets......................................
+		// Given a search with price and category facets ......................................
 		Config::inst()->update('ShopSearch', 'facets', array(
 			'Model'     => 'By Model',
 			'Price'     => 'By Price',
@@ -214,6 +215,44 @@ class ShopSearchTest extends SapphireTest
 		$this->assertEquals('Farm Stuff', $c1->Label,   'Category label should work');
 		$this->assertEquals(2, $c1->Count,              'Category count should work');
 		$this->assertEquals(3, $c3->Count,              'Category counts should include the secondary many/many relation');
+
+		// Given a search with a range facet for price and checkboxes for category ..........
+		Config::inst()->remove('ShopSearch', 'facets');
+		Config::inst()->update('ShopSearch', 'facets', array(
+			'Price' => array(
+				'Label' => 'By Price',
+				'Type'  => ShopSearch::FACET_TYPE_RANGE,
+			),
+			'Category' => array(
+				'Label'  => 'By Category',
+				'Type'   => ShopSearch::FACET_TYPE_CHECKBOX,
+				'Values' => 'ShopSearch::get_category_hierarchy()',
+			),
+		));
+
+		$params = array('q' => '');
+		$r = $s->search($params);
+		$r->Facets = ShopSearch::inst()->insertFacetLinks($r->Facets, $params, 'http://localhost/');
+		$this->assertEquals(2, $r->Facets->count(),     'There should be 2 facets');
+		$category = $r->Facets->last();
+		$this->assertEquals(4, $category->Values->count(),      'There should be a value for each category');
+		$this->assertTrue($category->Values->first()->Active,   'They should all be checked');
+		$this->assertTrue($category->Values->last()->Active,    'They should all be checked (2)');
+		$this->assertTrue($category->Values->offsetGet(1)->Active,   'They should all be checked (3)');
+		$this->assertTrue($category->Values->offsetGet(2)->Active,   'They should all be checked (4)');
+		$url = parse_url($category->Values->first()->Link);
+		parse_str($url['query'], $qs);
+		$this->assertNotEmpty($qs['f'],                     'Link should be all the other categories checked');
+		$this->assertNotEmpty($qs['f']['Category'],         'Link should be all the other categories checked (2)');
+		$this->assertTrue(is_array($qs['f']['Category']),   'Link should be all the other categories checked (3)');
+		$this->assertFalse(in_array($this->idFromFixture('ProductCategory', 'c1'), $qs['f']['Category']), 'Link should be all the other categories checked (4)');
+		$this->assertTrue(in_array($this->idFromFixture('ProductCategory', 'c2'), $qs['f']['Category']), 'Link should be all the other categories checked (5)');
+		$this->assertTrue(in_array($this->idFromFixture('ProductCategory', 'c3'), $qs['f']['Category']), 'Link should be all the other categories checked (6)');
+		$this->assertTrue(in_array($this->idFromFixture('ProductCategory', 'c4'), $qs['f']['Category']), 'Link should be all the other categories checked (7)');
+		$price = $r->Facets->first();
+		$this->assertEquals(5, $price->MinValue,            'Price minimum value');
+		$this->assertEquals(5000, $price->MaxValue,         'Price maximum value');
+		$this->assertContains('RANGEFACETVALUE', $price->Link, 'Link should leave placeholder for slider value');
 	}
 
 
@@ -259,7 +298,35 @@ class ShopSearchTest extends SapphireTest
 		));
 		$this->assertEquals(4, $r->TotalMatches,                'Should contain all products');
 
-		// TODO: 'tiered' pricing (ie. $5-10, $10-20, etc)
+		// filter on price range
+		$r = ShopSearch::inst()->search(array(
+			'f' => array(
+				'Price' => 'RANGE~8~12'
+			),
+		));
+		$this->assertEquals(1, $r->TotalMatches,                'Should contain only 1 product');
+		$this->assertEquals($this->idFromFixture('Product', 'p2'), $r->Matches->first()->ID, 'Match should be p2');
+
+		$r = ShopSearch::inst()->search(array(
+			'f' => array(
+				'Price' => 'RANGE~-3~4'
+			),
+		));
+		$this->assertEquals(0, $r->TotalMatches,                'Empty matches work on the low end');
+
+		$r = ShopSearch::inst()->search(array(
+			'f' => array(
+				'Price' => 'RANGE~5555~10000'
+			),
+		));
+		$this->assertEquals(0, $r->TotalMatches,                'Empty matches work on the high end');
+
+		$r = ShopSearch::inst()->search(array(
+			'f' => array(
+				'Price' => 'RANGE~12~8'
+			),
+		));
+		$this->assertEquals(0, $r->TotalMatches,                'A flipped range does not cause error');
 	}
 
 

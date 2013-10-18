@@ -23,37 +23,20 @@ class ShopSearchControllerExtension extends Extension
 	 * @return mixed
 	 */
 	public function results(array $data) {
-		$qs_q   = Config::inst()->get('ShopSearch', 'qs_query');
-		$qs_f   = Config::inst()->get('ShopSearch', 'qs_filters');
-		$qs_ps  = Config::inst()->get('ShopSearch', 'qs_parent_search');
-		$qs_t   = Config::inst()->get('ShopSearch', 'qs_title');
-		if (!isset($data[$qs_q])) $this->owner->httpError(400);
-
 		// do the search
 		$results = ShopSearch::inst()->search($data);
 
 		// add links for any facets
 		if ($results->Facets && $results->Facets->count()) {
-			$baseLink = $this->owner->getRequest()->getURL(false);
-			foreach ($results->Facets as $facet) {
-				foreach ($facet->Values as $value) {
-                    // make a copy of the existing get params
-					$params = array_merge($data, array($qs_ps => $results->SearchLogID));
-                    unset($params['url']);
-
-                    // add the filter for this value, allowing for other values as well (is that what we want?)
-                    if (!isset($params[$qs_f])) $params[$qs_f] = array();
-                    $params[$qs_f][$facet->getField('Field')] = $value->getField('Value');
-					$params[$qs_t] = $facet->getField('Label') . ': ' . $value->getField('Label');
-
-					// build a new link
-					$value->Link = $baseLink . '?' . http_build_query($params);
-				}
-			}
+			$qs_ps      = Config::inst()->get('ShopSearch', 'qs_parent_search');
+			$baseLink   = $this->owner->getRequest()->getURL(false);
+			$baseParams = array_merge($data, array($qs_ps => $results->SearchLogID));
+			unset($baseParams['url']);
+			$results->Facets = ShopSearch::inst()->insertFacetLinks($results->Facets, $baseParams, $baseLink);
 		}
 
 		// a little more output management
-		$results->Title = _t('ShopSearch.SearchResults', 'Search Results');
+		$results->Title   = _t('ShopSearch.SearchResults', 'Search Results');
 		$results->Results = $results->Matches;
 		return $this->owner->customise($results)->renderWith(array('Page_results', 'Page'));
 	}
