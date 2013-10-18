@@ -24,15 +24,15 @@ class ShopSearchTest extends SapphireTest
 		$p = singleton('Product');
 		if (!$p->hasExtension('VirtualFieldIndex')) {
 			Product::add_extension('VirtualFieldIndex');
-			Config::inst()->remove('VirtualFieldIndex', 'vfi_spec');
-			Config::inst()->update('VirtualFieldIndex', 'vfi_spec', array(
-				'Product' => array(
-					'Price2'    => 'sellingPrice',
-					'Price'     => array('Source' => 'sellingPrice', 'DBField' => 'Currency', 'DependsOn' => 'BasePrice'),
-					'Category'  => array('Parent', 'ProductCategories'),
-				),
-			));
 		}
+		Config::inst()->remove('VirtualFieldIndex', 'vfi_spec');
+		Config::inst()->update('VirtualFieldIndex', 'vfi_spec', array(
+			'Product' => array(
+				'Price2'    => 'sellingPrice',
+				'Price'     => array('Source' => 'sellingPrice', 'DBField' => 'Currency', 'DependsOn' => 'BasePrice'),
+				'Category'  => array('Parent', 'ProductCategories'),
+			),
+		));
 
 		parent::setUpOnce();
 	}
@@ -333,9 +333,9 @@ class ShopSearchTest extends SapphireTest
 	function testVFI() {
 		// Given a simple definition, spec should be properly fleshed out
 		$spec = VirtualFieldIndex::get_vfi_spec('Product');
-		$this->assertEquals('simple', $spec['Price']['Type']);
-		$this->assertEquals('all', $spec['Price']['DependsOn']);
-		$this->assertEquals('sellingPrice', $spec['Price']['Source']);
+		$this->assertEquals('simple', $spec['Price2']['Type']);
+		$this->assertEquals('all', $spec['Price2']['DependsOn']);
+		$this->assertEquals('sellingPrice', $spec['Price2']['Source']);
 
 		// Given a simple array definition, spec should be properly fleshed out
 		$spec = VirtualFieldIndex::get_vfi_spec('Product');
