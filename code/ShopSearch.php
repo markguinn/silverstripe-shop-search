@@ -13,7 +13,7 @@ class ShopSearch extends Object
 	const FACET_TYPE_RANGE      = 'range';
 
 	/** @var string - class name of adapter class to use */
-	private static $adapter_class = 'ShopSearchMysqlSimple';
+	private static $adapter_class = 'ShopSearchSimple';
 
 	/** @var array - these classes will be added to the index - e.g. Category, Page, etc. */
 	private static $searchable = array();
@@ -146,28 +146,7 @@ class ShopSearch extends Object
 
 		// for some types of facets, update the state
 		if ($results->hasValue('Facets')) {
-			foreach ($results->Facets as &$facet) {
-				if ($facet->Type == ShopSearch::FACET_TYPE_CHECKBOX) {
-					if (empty($filters[$facet->Source])) {
-						// If the filter is not being used at all, we count
-						// all values as active.
-						foreach ($facet->Values as &$value) {
-							$value->Active = true;
-						}
-					} else {
-						$filterVals = $filters[$facet->Source];
-						if (!is_array($filterVals)) $filterVals = array($filterVals);
-						foreach ($facet->Values as &$value) {
-							$value->Active = in_array($value->Value, $filterVals);
-						}
-					}
-				} elseif ($facet->Type == ShopSearch::FACET_TYPE_RANGE) {
-					if (!empty($filters[$facet->Source]) && preg_match('/^RANGE\~(.+)\~(.+)$/', $filters[$facet->Source], $m)) {
-						$facet->MinValue = $m[1];
-						$facet->MaxValue = $m[2];
-					}
-				}
-			}
+			FacetHelper::inst()->updateFacetState($results->Facets, $filters);
 		}
 
 		// TODO: Paging
@@ -221,58 +200,6 @@ class ShopSearch extends Object
 		}
 
 		return $q;
-	}
-
-
-	/**
-	 * Inserts a "Link" field into the values for each facet which can be
-	 * used to get a filtered search based on that facets
-	 *
-	 * @param ArrayList $facets
-	 * @param array     $baseParams
-	 * @param string    $baseLink
-	 * @return ArrayList
-	 */
-	public function insertFacetLinks(ArrayList $facets, array $baseParams, $baseLink) {
-		$qs_f   = Config::inst()->get('ShopSearch', 'qs_filters');
-		$qs_t   = Config::inst()->get('ShopSearch', 'qs_title');
-
-		foreach ($facets as $facet) {
-			if ($facet->Type == ShopSearch::FACET_TYPE_RANGE) {
-				$params = array_merge($baseParams, array());
-				if (!isset($params[$qs_f])) $params[$qs_f] = array();
-				$params[$qs_f][$facet->Source] = 'RANGEFACETVALUE';
-				$params[$qs_t] = $facet->Label . ': RANGEFACETLABEL';
-				$facet->Link = $baseLink . '?' . http_build_query($params);
-			} else {
-				foreach ($facet->Values as $value) {
-					// make a copy of the existing params
-					$params = array_merge($baseParams, array());
-
-					// add the filter for this value
-					if (!isset($params[$qs_f])) $params[$qs_f] = array();
-					if ($facet->Type == ShopSearch::FACET_TYPE_CHECKBOX) {
-						$f = array();
-						foreach ($facet->Values as $val2) {
-							$active = $val2->Active;
-							if ($value->Value == $val2->Value) $active = !$active;
-							if ($active) $f[] = $val2->Value;
-						}
-
-						$params[$qs_f][$facet->Source] = $f;
-						$params[$qs_t] = ($value->Active ? 'Remove ' : '') . $facet->Label . ': ' . $value->Label;
-					} else {
-						$params[$qs_f][$facet->Source] = $value->Value;
-						$params[$qs_t] = $facet->Label . ': ' . $value->Label;
-					}
-
-					// build a new link
-					$value->Link = $baseLink . '?' . http_build_query($params);
-				}
-			}
-		}
-
-		return $facets;
 	}
 
 

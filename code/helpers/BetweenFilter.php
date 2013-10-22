@@ -6,6 +6,7 @@
  * @author Mark Guinn <mark@adaircreative.com>
  * @date 10.18.2013
  * @package shop_Search
+ * @subpackage helpers
  */
 class BetweenFilter extends SearchFilter
 {

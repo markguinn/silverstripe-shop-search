@@ -37,6 +37,7 @@
  * @author Mark Guinn <mark@adaircreative.com>
  * @date 09.25.2013
  * @package shop_search
+ * @subpackage helpers
  */
 class VirtualFieldIndex extends DataExtension
 {

@@ -16,7 +16,7 @@ class ShopSearchTest extends SapphireTest
 		Config::inst()->update('ShopSearch', 'buyables_are_searchable', false);
 		Config::inst()->remove('ShopSearch', 'searchable');
 		Config::inst()->update('ShopSearch', 'searchable', array('Product'));
-		Config::inst()->update('ShopSearch', 'adapter_class', 'ShopSearchMysqlSimple');
+		Config::inst()->update('ShopSearch', 'adapter_class', 'ShopSearchSimple');
 		Config::inst()->remove('Product', 'searchable_fields');
 		Config::inst()->update('Product', 'searchable_fields', array('Title', 'Content'));
 		Config::inst()->remove('ShopSearch', 'facets');
@@ -232,7 +232,7 @@ class ShopSearchTest extends SapphireTest
 
 		$params = array('q' => '');
 		$r = $s->search($params);
-		$r->Facets = ShopSearch::inst()->insertFacetLinks($r->Facets, $params, 'http://localhost/');
+		$r->Facets = FacetHelper::inst()->insertFacetLinks($r->Facets, $params, 'http://localhost/');
 		$this->assertEquals(2, $r->Facets->count(),     'There should be 2 facets');
 		$category = $r->Facets->last();
 		$this->assertEquals(4, $category->Values->count(),      'There should be a value for each category');
@@ -363,6 +363,43 @@ class ShopSearchTest extends SapphireTest
 		$this->assertEquals(5, $p->getVFI('Price'),         'Simple getter works');
 		$this->assertEquals($cats->toArray(), $p->getVFI('Category'),  'List getter works');
 		$this->assertNull($p->getVFI('NonExistentField'),   'Non existent field should return null');
+	}
+
+
+	function testFacetsOnCategory() {
+		VirtualFieldIndex::build('Product');
+		foreach (Product::get() as $p) {
+			$p->publish('Stage','Live');
+		}
+
+		$c      = $this->objFromFixture('ProductCategory', 'c3');
+		$c->publish('Stage','Live');
+		$prods  = $c->ProductsShowable();
+		$this->assertEquals(3, $prods->count(),         'There are initially 3 products in the category');
+
+		$prods  = FacetHelper::inst()->addFiltersToDataList($c->ProductsShowable(), array(
+			'Price'     => 'RANGE~1~10',
+		));
+		$this->assertEquals(2, $prods->count(),         'Should be 2 products after a price range');
+
+//		$prods  = $c->addFiltersToDataList($c->ProductsShowable(), array(
+//			'Category'  => $this->idFromFixture('ProductCategory', 'c1'),
+//		));
+//		Debug::dump($prods->dataQuery()->sql());
+//		$this->assertEquals(1, $prods->count(),         'Should be 1 product also in c1');
+
+		$facets = FacetHelper::inst()->buildFacets($prods, array(
+			'Price' => array(
+				'Label' => 'By Price',
+				'Type'  => ShopSearch::FACET_TYPE_RANGE,
+			),
+			'Category' => array(
+				'Label'  => 'By Category',
+				'Type'   => ShopSearch::FACET_TYPE_CHECKBOX,
+				'Values' => 'ShopSearch::get_category_hierarchy()',
+			),
+		));
+		$this->assertEquals(2, $facets->count(),        'Should be 2 facets');
 	}
 
 }

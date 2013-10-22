@@ -1,78 +1,53 @@
 <?php
 /**
- * VERY simply adapter to use mysql and 'like' searches. Bare mininum
- * that will probably get terrible results but doesn't require any
- * additional setup.
+ * Adds methods for limited kinds of faceting using the silverstripe ORM.
+ * This is used by the default ShopSearchSimple adapter but also can
+ * be added to other contexts (such as ProductCategory).
+ *
+ * TODO: Facet class + subclasses
  *
  * @author Mark Guinn <mark@adaircreative.com>
- * @date 09.03.2013
+ * @date 10.21.2013
  * @package shop_search
+ * @subpackage helpers
  */
-class ShopSearchMysqlSimple implements ShopSearchAdapter
+class FacetHelper extends Object
 {
 	/**
-	 * @param string $keywords
-	 * @param array $filters [optional]
-	 * @param array $facetSpec [optional]
-	 * @return ArrayData
+	 * @return FacetHelper
 	 */
-	function searchFromVars($keywords, array $filters=array(), array $facetSpec=array()) {
-		$searchable = ShopSearch::get_searchable_classes();
-		$matches = new ArrayList;
-
-		foreach ($searchable as $className) {
-			$sing = singleton($className);
-			$list = DataObject::get($className);
-
-			// get searchable fields
-			$keywordFields = $this->scaffoldSearchFields($className);
-
-			// convert that list into something we can pass to Datalist::filter
-			$keywordFilter = array();
-			if (!empty($keywords)) {
-				foreach($keywordFields as $searchField) {
-					$name = (strpos($searchField, ':') !== FALSE) ? $searchField : "$searchField:PartialMatch";
-					$keywordFilter[$name] = $keywords;
-				}
-			}
-			if (count($keywordFilter) > 0) $list = $list->filterAny($keywordFilter);
-
-			// add in any other filters
-			if (!empty($filters)) {
-				foreach ($filters as $filterField => $filterVal) {
-					// If they gave us an array, it needs to be an OR filter, otherwise just add it to the stack
-//					if (is_array($filterVal)) {
-//						$orFilter = array();
-//						foreach ($filterVal as $val) {
-//							$orFilter += $this->processFilterField($sing, $filterField, $val);
-//							Debug::dump(array($filterVal, $val, $orFilter));
-//						}
-//						$list = $list->filterAny($orFilter);
-//					} else {
-						$list = $list->filter($this->processFilterField($sing, $filterField, $filterVal));
-//					}
-				}
-			}
-
-//			Debug::dump($list->sql());
-			// add any matches to the big list
-			$matches->merge($list);
-		}
-
-		return new ArrayData(array(
-			'Matches'   => $matches,
-			'Facets'    => $this->buildFacets($matches, $facetSpec),
-		));
+	public static function inst() {
+		return Injector::inst()->get('FacetHelper');
 	}
 
 
 	/**
-	 * @param DataObject $rec
+	 * @param SS_List $list
+	 * @param array    $filters
+	 * @param DataObject|string $sing - just a singleton object we can get information off of
+	 * @return SS_List
+	 */
+	public function addFiltersToDataList(SS_List $list, array $filters, $sing=null) {
+		if (!$sing) $sing = singleton($list->dataClass());
+		if (is_string($sing)) $sing = singleton($sing);
+
+		if (!empty($filters)) {
+			foreach ($filters as $filterField => $filterVal) {
+				$list = $list->filter($this->processFilterField($sing, $filterField, $filterVal));
+			}
+		}
+
+		return $list;
+	}
+
+
+	/**
+	 * @param DataObject $rec           This would normally just be a singleton but we don't want to have to create it over and over
 	 * @param string     $filterField
 	 * @param mixed      $filterVal
 	 * @return array - returns the new filter added
 	 */
-	protected function processFilterField($rec, $filterField, $filterVal) {
+	public function processFilterField($rec, $filterField, $filterVal) {
 		// First check for VFI fields
 		if ($rec->hasExtension('VirtualFieldIndex') && ($spec = $rec->getVFISpec($filterField))) {
 			if ($spec['Type'] == VirtualFieldIndex::TYPE_LIST) {
@@ -111,17 +86,25 @@ class ShopSearchMysqlSimple implements ShopSearchAdapter
 	 * maybe you have unlimited time and can refactor this feature
 	 * and submit a pull request...
 	 *
+	 * TODO: If this is going to be used for categories we're going
+	 * to have to really clean it up and speed it up.
+	 * Suggestion:
+	 *  - option to turn off counts
+	 *  - switch order of nested array so we don't go through results unless needed
+	 *  - if not doing counts, min/max and link facets can be handled w/ queries
+	 *  - separate that bit out into a new function
+	 *
 	 * Output - list of ArrayData in the format:
 	 *   Label - name of the facet
 	 *   Source - field name of the facet
 	 *   Type - one of the ShopSearch::FACET_TYPE_XXXX constants
 	 *   Values - SS_List of possible values for this facet
 	 *
-	 * @param ArrayList $matches
+	 * @param SS_List $matches
 	 * @param array $facetSpec
 	 * @return ArrayList
 	 */
-	protected function buildFacets(ArrayList $matches, array $facetSpec) {
+	public function buildFacets(SS_List $matches, array $facetSpec) {
 		if (empty($facetSpec) || !$matches || !$matches->count()) return new ArrayList();
 		$facets = array();
 
@@ -241,43 +224,89 @@ class ShopSearchMysqlSimple implements ShopSearchAdapter
 
 
 	/**
-	 * This is verbatim copied from GridFieldAddExistingAutocompleter, with the exception
-	 * that the default is 'PartialMatch' instead of 'StartsWith'
+	 * Inserts a "Link" field into the values for each facet which can be
+	 * used to get a filtered search based on that facets
 	 *
-	 * @param String $dataClass - the class name
-	 * @return Array|null - names of the searchable fields, with filters if appropriate
+	 * @param ArrayList $facets
+	 * @param array     $baseParams
+	 * @param string    $baseLink
+	 * @return ArrayList
 	 */
-	protected function scaffoldSearchFields($dataClass) {
-		$obj = singleton($dataClass);
-		$fields = null;
-		if($fieldSpecs = $obj->searchableFields()) {
-			$customSearchableFields = $obj->stat('searchable_fields');
-			foreach($fieldSpecs as $name => $spec) {
-				if(is_array($spec) && array_key_exists('filter', $spec)) {
-					// The searchableFields() spec defaults to PartialMatch,
-					// so we need to check the original setting.
-					// If the field is defined $searchable_fields = array('MyField'),
-					// then default to StartsWith filter, which makes more sense in this context.
-					if(!$customSearchableFields || array_search($name, $customSearchableFields)) {
-						$filter = 'PartialMatch';
+	public function insertFacetLinks(ArrayList $facets, array $baseParams, $baseLink) {
+		$qs_f   = Config::inst()->get('ShopSearch', 'qs_filters');
+		$qs_t   = Config::inst()->get('ShopSearch', 'qs_title');
+
+		foreach ($facets as $facet) {
+			if ($facet->Type == ShopSearch::FACET_TYPE_RANGE) {
+				$params = array_merge($baseParams, array());
+				if (!isset($params[$qs_f])) $params[$qs_f] = array();
+				$params[$qs_f][$facet->Source] = 'RANGEFACETVALUE';
+				$params[$qs_t] = $facet->Label . ': RANGEFACETLABEL';
+				$facet->Link = $baseLink . '?' . http_build_query($params);
+			} else {
+				foreach ($facet->Values as $value) {
+					// make a copy of the existing params
+					$params = array_merge($baseParams, array());
+
+					// add the filter for this value
+					if (!isset($params[$qs_f])) $params[$qs_f] = array();
+					if ($facet->Type == ShopSearch::FACET_TYPE_CHECKBOX) {
+						$f = array();
+						foreach ($facet->Values as $val2) {
+							$active = $val2->Active;
+							if ($value->Value == $val2->Value) $active = !$active;
+							if ($active) $f[] = $val2->Value;
+						}
+
+						$params[$qs_f][$facet->Source] = $f;
+						$params[$qs_t] = ($value->Active ? 'Remove ' : '') . $facet->Label . ': ' . $value->Label;
 					} else {
-						$filter = preg_replace('/Filter$/', '', $spec['filter']);
+						$params[$qs_f][$facet->Source] = $value->Value;
+						$params[$qs_t] = $facet->Label . ': ' . $value->Label;
 					}
-					$fields[] = "{$name}:{$filter}";
-				} else {
-					$fields[] = $name;
+
+					// build a new link
+					$value->Link = $baseLink . '?' . http_build_query($params);
 				}
 			}
 		}
-		if (is_null($fields)) {
-			if ($obj->hasDatabaseField('Title')) {
-				$fields = array('Title');
-			} elseif ($obj->hasDatabaseField('Name')) {
-				$fields = array('Name');
+
+		return $facets;
+	}
+
+
+	/**
+	 * For checkbox and range facets, this updates the state (checked and min/max)
+	 * based on current filter values.
+	 *
+	 * @param ArrayList $facets
+	 * @param array     $filters
+	 * @return ArrayList
+	 */
+	public function updateFacetState(ArrayList $facets, array $filters) {
+		foreach ($facets as &$facet) {
+			if ($facet->Type == ShopSearch::FACET_TYPE_CHECKBOX) {
+				if (empty($filters[$facet->Source])) {
+					// If the filter is not being used at all, we count
+					// all values as active.
+					foreach ($facet->Values as &$value) {
+						$value->Active = true;
+					}
+				} else {
+					$filterVals = $filters[$facet->Source];
+					if (!is_array($filterVals)) $filterVals = array($filterVals);
+					foreach ($facet->Values as &$value) {
+						$value->Active = in_array($value->Value, $filterVals);
+					}
+				}
+			} elseif ($facet->Type == ShopSearch::FACET_TYPE_RANGE) {
+				if (!empty($filters[$facet->Source]) && preg_match('/^RANGE\~(.+)\~(.+)$/', $filters[$facet->Source], $m)) {
+					$facet->MinValue = $m[1];
+					$facet->MaxValue = $m[2];
+				}
 			}
 		}
 
-		return $fields;
+		return $facets;
 	}
-
 }
