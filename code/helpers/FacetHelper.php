@@ -81,34 +81,14 @@ class FacetHelper extends Object
 
 
 	/**
-	 * This is super-slow. I'm assuming if you're using facets you
-	 * probably also ought to be using Solr or something else. Or
-	 * maybe you have unlimited time and can refactor this feature
-	 * and submit a pull request...
-	 *
-	 * TODO: If this is going to be used for categories we're going
-	 * to have to really clean it up and speed it up.
-	 * Suggestion:
-	 *  - option to turn off counts
-	 *  - switch order of nested array so we don't go through results unless needed
-	 *  - if not doing counts, min/max and link facets can be handled w/ queries
-	 *  - separate that bit out into a new function
-	 *
-	 * Output - list of ArrayData in the format:
-	 *   Label - name of the facet
-	 *   Source - field name of the facet
-	 *   Type - one of the ShopSearch::FACET_TYPE_XXXX constants
-	 *   Values - SS_List of possible values for this facet
-	 *
-	 * @param SS_List $matches
+	 * Processes the facet spec and removes any shorthand (field => label).
 	 * @param array $facetSpec
-	 * @return ArrayList
+	 * @return array
 	 */
-	public function buildFacets(SS_List $matches, array $facetSpec) {
-		if (empty($facetSpec) || !$matches || !$matches->count()) return new ArrayList();
+	public function expandFacetSpec(array $facetSpec) {
+		if (is_null($facetSpec)) return array();
 		$facets = array();
 
-		// set up the facets
 		foreach ($facetSpec as $field => $label) {
 			if (is_array($label)) {
 				$facets[$field] = $label;
@@ -134,6 +114,38 @@ class FacetHelper extends Object
 				}
 			}
 		}
+
+		return $facets;
+	}
+
+
+	/**
+	 * This is super-slow. I'm assuming if you're using facets you
+	 * probably also ought to be using Solr or something else. Or
+	 * maybe you have unlimited time and can refactor this feature
+	 * and submit a pull request...
+	 *
+	 * TODO: If this is going to be used for categories we're going
+	 * to have to really clean it up and speed it up.
+	 * Suggestion:
+	 *  - option to turn off counts
+	 *  - switch order of nested array so we don't go through results unless needed
+	 *  - if not doing counts, min/max and link facets can be handled w/ queries
+	 *  - separate that bit out into a new function
+	 *
+	 * Output - list of ArrayData in the format:
+	 *   Label - name of the facet
+	 *   Source - field name of the facet
+	 *   Type - one of the ShopSearch::FACET_TYPE_XXXX constants
+	 *   Values - SS_List of possible values for this facet
+	 *
+	 * @param SS_List $matches
+	 * @param array $facetSpec
+	 * @return ArrayList
+	 */
+	public function buildFacets(SS_List $matches, array $facetSpec) {
+		$facets = $this->expandFacetSpec($facetSpec);
+		if (empty($facets) || !$matches || !$matches->count()) return new ArrayList();
 
 		// fill them in
 		foreach ($matches as $rec) {

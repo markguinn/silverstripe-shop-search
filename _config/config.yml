@@ -4,3 +4,6 @@ Name: shopsearch
 ContentController:
   extensions:
     - ShopSearchControllerExtension
+LeftAndMain:
+  extra_requirements_css:
+    - shop_search/css/ShopSearchCMS.css
