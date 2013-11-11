@@ -94,9 +94,18 @@ class VirtualFieldIndex extends DataExtension
 	 * @return array
 	 */
 	public static function get_vfi_spec($class) {
-		$vfi_def = Config::inst()->get('VirtualFieldIndex', 'vfi_spec');
-		if (!$vfi_def || !is_array($vfi_def) || !isset($vfi_def[$class])) return array();
-		$vfi_def = $vfi_def[$class];
+		$vfi_master = Config::inst()->get('VirtualFieldIndex', 'vfi_spec');
+		if (!$vfi_master || !is_array($vfi_master)) return array();
+
+		// merge in all the vfi's from ancestors as well
+		$vfi_def = array();
+		foreach (ClassInfo::ancestry($class) as $c) {
+			if (!empty($vfi_master[$c])) {
+				// we want newer classes to override parent classes so we do it this way
+				$vfi_def = $vfi_master[$c] + $vfi_def;
+			}
+		}
+		if (empty($vfi_def)) return array();
 
 		// convert shorthand to longhand
 		foreach ($vfi_def as $k => $v) {
@@ -125,13 +134,19 @@ class VirtualFieldIndex extends DataExtension
 	}
 
 	/**
-	 * Rebuilds any vfi fields on one class (or all)
+	 * Rebuilds any vfi fields on one class (or all). Doing it in chunks means a few more
+	 * queries but it means we can handle larger datasets without storing everything in memory.
+	 *
 	 * @param string $class [optional] - if not given all indexes will be rebuilt
 	 */
 	public static function build($class='') {
 		if ($class) {
-			$list = DataObject::get($class);
-			foreach ($list as $rec) $rec->rebuildVFI();
+			$list   = DataObject::get($class);
+			$count  = $list->count();
+			for ($i = 0; $i < $count; $i += 10) {
+				$chunk = $list->limit(10, $i);
+				foreach ($chunk as $rec) $rec->rebuildVFI();
+			}
 		} else {
 			foreach (self::get_classes_with_vfi() as $c) self::build($c);
 		}
@@ -142,6 +157,7 @@ class VirtualFieldIndex extends DataExtension
 	 */
 	public function rebuildVFI($field = '') {
 		if ($field) {
+			echo "$field...";
 			$this->isRebuilding = true;
 			$spec   = $this->getVFISpec($field);
 			$fn     = $this->getVFIFieldName($field);
@@ -160,6 +176,7 @@ class VirtualFieldIndex extends DataExtension
 			$this->owner->write();
 			$this->isRebuilding = false;
 		} else {
+			echo "\nID={$this->owner->ID}...";
 			// rebuild all fields if they didn't specify
 			foreach ($this->getVFISpec() as $field => $spec) {
 				$this->rebuildVFI($field);

@@ -17,6 +17,9 @@ class ShopSearchForm extends Form
 	/** @var string - setting to 'NONE' will mean the category dropdwon will have no empty option */
 	private static $category_empty_string = 'All Products';
 
+	/** @var int - how deep to list the categories for the dropdown */
+	private static $category_max_depth = 10;
+
 
 	/**
 	 * @param Controller $controller
@@ -30,7 +33,7 @@ class ShopSearchForm extends Form
 
 		$fields = new FieldList($searchField);
 		if (!Config::inst()->get('ShopSearchForm', 'disable_category_dropdown')) {
-			$cats     = ShopSearch::get_category_hierarchy();
+			$cats     = ShopSearch::get_category_hierarchy(0, '', Config::inst()->get('ShopSearchForm', 'category_max_depth'));
 			$catField = new DropdownField(self::get_category_field(), '', $cats);
 
 			$emptyString = Config::inst()->get('ShopSearchForm', 'category_empty_string');
