@@ -157,7 +157,6 @@ class VirtualFieldIndex extends DataExtension
 	 */
 	public function rebuildVFI($field = '') {
 		if ($field) {
-			echo "$field...";
 			$this->isRebuilding = true;
 			$spec   = $this->getVFISpec($field);
 			$fn     = $this->getVFIFieldName($field);
@@ -176,7 +175,6 @@ class VirtualFieldIndex extends DataExtension
 			$this->owner->write();
 			$this->isRebuilding = false;
 		} else {
-			echo "\nID={$this->owner->ID}...";
 			// rebuild all fields if they didn't specify
 			foreach ($this->getVFISpec() as $field => $spec) {
 				$this->rebuildVFI($field);
