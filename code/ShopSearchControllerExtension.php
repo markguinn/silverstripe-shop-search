@@ -58,7 +58,7 @@ class ShopSearchControllerExtension extends Extension
 			$searchVars = $req->requestVars();
 			$searchVars[ Config::inst()->get('ShopSearch', 'qs_query') ] = $searchVars['term'];
 			unset($searchVars['term']);
-			$search     = ShopSearch::inst()->search($searchVars, false);
+			$search     = ShopSearch::inst()->search($searchVars, false, false);
 			$prodList   = $search->Matches->limit(5);
 			$searchVars['total'] = $search->TotalMatches; // this gets encoded into the product links
 

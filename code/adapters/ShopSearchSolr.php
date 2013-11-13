@@ -14,14 +14,22 @@ class ShopSearchSolr extends SolrIndex
 	 */
 	function init() {
 		$searchables = ShopSearch::get_searchable_classes();
+		$cfg = Config::inst();
 
 		// Add each class to the index
 		foreach ($searchables as $class) {
 			$this->addClass($class);
+			$fields = $cfg->get($class, 'shop_search_fields');
+			if (empty($fields)) $fields = $cfg->get($class, 'searchable_fields');
+			if (empty($fields)) $fields = array('Title');
+			foreach ($fields as $f) {
+				$this->addFulltextField($f);
+			}
 		}
 
 		// TODO: replace this with searchable_fields or custom config
-		$this->addAllFulltextFields();
+		//$this->addAllFulltextFields();
+		//Debug::dump($this->getFulltextFields());
 	}
 
 	/**

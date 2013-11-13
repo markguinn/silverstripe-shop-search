@@ -8,6 +8,13 @@ Full features + documentation coming soon. Check the comments for now.
 
 REQUIREMENTS:
 -------------
+- Silverstripe 3.1 (3.0 may work but is untested and unsupported)
+- Shop Module 1.0
+- Fulltextsearch module (if using solr)
+
+
+FEATURES:
+---------
 - Keyword search on multiple fields
 - Remember search history
 - Search suggestions

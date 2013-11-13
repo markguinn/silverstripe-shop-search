@@ -126,14 +126,15 @@ class ShopSearch extends Object
 	 *
 	 * @param array $vars
 	 * @param bool $logSearch [optional]
+	 * @param bool $useFacets [optional]
 	 * @return ArrayData
 	 */
-	public function search(array $vars, $logSearch=true) {
+	public function search(array $vars, $logSearch=true, $useFacets=true) {
 		$qs_q   = $this->config()->get('qs_query');
 		$qs_f   = $this->config()->get('qs_filters');
 		$qs_ps  = $this->config()->get('qs_parent_search');
 		$qs_t   = $this->config()->get('qs_title');
-		$facets = $this->config()->get('facets');
+		$facets = $useFacets ? $this->config()->get('facets') : array();
 		if (!is_array($facets)) $facets = array();
 
 		// do the search
@@ -141,6 +142,7 @@ class ShopSearch extends Object
 		$filters  = !empty($vars[$qs_f]) ? $vars[$qs_f] : array();
 		foreach ($filters as $k => $v) if (empty($v)) unset($filters[$k]);
 		$results  = self::adapter()->searchFromVars($keywords, $filters, $facets);
+Debug::dump($results);
 
 		// massage the results a bit
 		if (!empty($keywords) && !$results->hasValue('Query')) $results->Query = $keywords;
