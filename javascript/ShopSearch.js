@@ -107,6 +107,14 @@
 			var url = $(this).closest('label').data('url');
 			if (url) document.location.href = url;
 		});
+
+		// Search sorter
+		$('#sort').change(function(){
+			var $this = $(this);
+			var url = $this.data('url');
+			url = url.replace('NEWSORTVALUE', encodeURIComponent($this.val()));
+			document.location.href = url;
+		});
 	});
 
 }(jQuery, this, this.document));

@@ -14,9 +14,12 @@ class ShopSearchSimple extends Object implements ShopSearchAdapter
 	 * @param string $keywords
 	 * @param array $filters [optional]
 	 * @param array $facetSpec [optional]
+	 * @param int $start [optional]
+	 * @param int $limit [optional]
+	 * @param string $sort [optional]
 	 * @return ArrayData
 	 */
-	function searchFromVars($keywords, array $filters=array(), array $facetSpec=array()) {
+	function searchFromVars($keywords, array $filters=array(), array $facetSpec=array(), $start=-1, $limit=-1, $sort='') {
 		$searchable = ShopSearch::get_searchable_classes();
 		$matches = new ArrayList;
 

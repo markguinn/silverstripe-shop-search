@@ -20,6 +20,8 @@ others, though.
 **Setup**
 Use searchable_fields config/static on your model(s).
 
+NOTE: Paging is not yet implemented
+
 
 ShopSearchMysql
 ---------------
@@ -48,9 +50,75 @@ class MyModel extends DataObject {
 ```
 The adapter will look for the "SearchFields" index.
 
+NOTE: Paging is not yet implemented
+
 
 ShopSearchSolr
 --------------
-This adapter is not feature complete and may not actually work. To
-get going, see the docs for setting up Solr on the fulltextsearch
-module and go from there.
+Follow the instructions on the fulltextsearch module to get solr running.
+This adapter is the quickest and most feature-complete. Fulltext and filter
+fields are set using yml configuration options on the ShopSearch class.
+This is because there is additional config that may need to happen. An
+example would be the following:
+
+```
+ShopSearch:
+  adapter_class: ShopSearchSolr
+  buyables_are_searchable: 0
+  searchable:
+    - Product
+  facets:
+    Category:
+      Label: Category
+      Type: checkbox
+      Values: 'ShopSearch::get_category_hierarchy(0,"",2)'
+    Price:
+      Label: Price
+      Type: range
+      RangeMin: 0
+      RangeMax: 2000
+      LabelFormat: Currency
+    PromoSavings:
+      Label: Discount
+      Type: range
+      RangeMin: 0
+      RangeMax: 50
+      LabelFormat: Currency
+  sort_options:
+    'score desc': 'Relevance'
+    'SiteTree_Title asc': 'Alphabetical'
+  solr_fulltext_fields:
+    - Title
+    - Content
+    - ShortContent
+  solr_filter_fields:
+    Price:
+      field: VFI_Price
+      type: Double
+    PromoSavings:
+      field: VFI_PromoSavings
+      type: Double
+    DirectCategory:
+      field: AllCategoryIDs
+      type: Int
+      multiValued: 'true'
+    Category:
+      field: AllCategoryIDsRecursive
+      type: Int
+      multiValued: 'true'
+```
+
+Which would allow sorting and filtering by category and price among other things.
+The above example depends on some other things being in place - additional methods
+added to the Product model (in this case via extension) and some VirtualFieldIndexes
+being set up. It's not a drop-in example. Once you've got fields set, following these
+steps should get you up and running:
+
+1. cd PROJECTROOT/fulltextsearch-localsolr
+2. ./start.sh
+3. cd PROJECTROOT
+5. framework/sake dev/tasks/Solr_Configure
+6. framework/sake dev/tasks/Solr_Reindex
+
+Good luck.
+

@@ -35,6 +35,12 @@ class ShopSearchControllerExtension extends Extension
 			$results->Facets = FacetHelper::inst()->insertFacetLinks($results->Facets, $baseParams, $baseLink);
 		}
 
+		// add a dropdown for sorting
+		$qs_sort = Config::inst()->get('ShopSearch', 'qs_sort');
+		$options = Config::inst()->get('ShopSearch', 'sort_options');
+		$results->SortControl = DropdownField::create($qs_sort, '', $options, $results->Sort)
+			->setAttribute('data-url', HTTP::setGetVar($qs_sort, 'NEWSORTVALUE', $this->owner->getRequest()->getURL(true)));
+
 		// a little more output management
 		$results->Title   = _t('ShopSearch.SearchResults', 'Search Results');
 		$results->Results = $results->Matches;
@@ -58,8 +64,9 @@ class ShopSearchControllerExtension extends Extension
 			$searchVars = $req->requestVars();
 			$searchVars[ Config::inst()->get('ShopSearch', 'qs_query') ] = $searchVars['term'];
 			unset($searchVars['term']);
-			$search     = ShopSearch::inst()->search($searchVars, false, false);
-			$prodList   = $search->Matches->limit(5);
+			$limit      = (int)Config::inst()->get('ShopSearch', 'sayt_limit');
+			$search     = ShopSearch::inst()->search($searchVars, false, false, 0, $limit);
+			$prodList   = $search->Matches;
 			$searchVars['total'] = $search->TotalMatches; // this gets encoded into the product links
 
 			foreach ($prodList as $prod) {
