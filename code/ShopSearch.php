@@ -192,12 +192,13 @@ class ShopSearch extends Object
 		// make a hash of the search so we can know if we've already logged it this session
 		$loggedFilters = !empty($filters) ? json_encode($filters) : null;
 		$loggedQuery   = strtolower($results->Query);
-		$searchHash    = md5($loggedFilters . $loggedQuery);
-		$sessSearches  = Session::get('loggedSearches');
-		if (!is_array($sessSearches)) $sessSearches = array();
+//		$searchHash    = md5($loggedFilters . $loggedQuery);
+//		$sessSearches  = Session::get('loggedSearches');
+//		if (!is_array($sessSearches)) $sessSearches = array();
+//		Debug::dump($searchHash, $sessSearches);
 
 		// save the log record
-		if ($start == 0 && $logSearch && (!empty($keywords) || !empty($filters)) && !in_array($searchHash, $sessSearches)) {
+		if ($start == 0 && $logSearch && (!empty($keywords) || !empty($filters))) { // && !in_array($searchHash, $sessSearches)) {
 			$log = new SearchLog(array(
 				'Query'         => $loggedQuery,
 				'Title'         => !empty($vars[$qs_t]) ? $vars[$qs_t] : '',
@@ -211,8 +212,8 @@ class ShopSearch extends Object
 			$results->SearchLogID = $log->ID;
 			$results->SearchBreadcrumbs = $log->getBreadcrumbs();
 
-			$sessSearches[] = $searchHash;
-			Session::set('loggedSearches', $sessSearches);
+//			$sessSearches[] = $searchHash;
+//			Session::set('loggedSearches', $sessSearches);
 		}
 
 		return $results;
