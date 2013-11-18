@@ -189,23 +189,30 @@ class ShopSearch extends Object
 			FacetHelper::inst()->updateFacetState($results->Facets, $filters);
 		}
 
-		// TODO: Paging
-		// TODO: don't log multiple times for paging
+		// make a hash of the search so we can know if we've already logged it this session
+		$loggedFilters = !empty($filters) ? json_encode($filters) : null;
+		$loggedQuery   = strtolower($results->Query);
+		$searchHash    = md5($loggedFilters . $loggedQuery);
+		$sessSearches  = Session.get('loggedSearches');
+		if (!is_array($sessSearches)) $sessSearches = array();
 
 		// save the log record
-		if ($logSearch && (!empty($keywords) || !empty($filters))) {
+		if ($start == 0 && $logSearch && (!empty($keywords) || !empty($filters)) && !in_array($searchHash, $sessSearches)) {
 			$log = new SearchLog(array(
-				'Query'         => strtolower($results->Query),
+				'Query'         => $loggedQuery,
 				'Title'         => !empty($vars[$qs_t]) ? $vars[$qs_t] : '',
 				'Link'          => Controller::curr()->getRequest()->getURL(true), // I'm not 100% happy with this, but can't think of a better way
 				'NumResults'    => $results->TotalMatches,
 				'MemberID'      => Member::currentUserID(),
-				'Filters'       => !empty($filters) ? json_encode($filters) : null,
+				'Filters'       => $loggedFilters,
 				'ParentSearchID'=> !empty($vars[$qs_ps]) ? $vars[$qs_ps] : 0,
 			));
 			$log->write();
 			$results->SearchLogID = $log->ID;
 			$results->SearchBreadcrumbs = $log->getBreadcrumbs();
+
+			$sessSearches[] = $searchHash;
+			Session.set('loggedSearches', $sessSearches);
 		}
 
 		return $results;

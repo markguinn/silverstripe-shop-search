@@ -34,9 +34,6 @@ INSTALLATION:
 
 TODO:
 -----
-- Better field selection for search
-- Define filters manually or based on available variations/attributes
-- Faceting on Solr
 - Tests for Solr adapter
 - Figure out how to handle category filtering and parent/sub cats
 

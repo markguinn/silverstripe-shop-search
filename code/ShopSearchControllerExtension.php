@@ -24,22 +24,24 @@ class ShopSearchControllerExtension extends Extension
 	 */
 	public function results(array $data) {
 		// do the search
-		$results = ShopSearch::inst()->search($data);
+		$results  = ShopSearch::inst()->search($data);
+		$baseLink = $this->owner->getRequest()->getURL(false);
 
 		// add links for any facets
 		if ($results->Facets && $results->Facets->count()) {
 			$qs_ps      = Config::inst()->get('ShopSearch', 'qs_parent_search');
-			$baseLink   = $this->owner->getRequest()->getURL(false);
 			$baseParams = array_merge($data, array($qs_ps => $results->SearchLogID));
 			unset($baseParams['url']);
 			$results->Facets = FacetHelper::inst()->insertFacetLinks($results->Facets, $baseParams, $baseLink);
 		}
 
 		// add a dropdown for sorting
-		$qs_sort = Config::inst()->get('ShopSearch', 'qs_sort');
-		$options = Config::inst()->get('ShopSearch', 'sort_options');
+		$qs_sort    = Config::inst()->get('ShopSearch', 'qs_sort');
+		$options    = Config::inst()->get('ShopSearch', 'sort_options');
+		$sortParams = array_merge($data, array($qs_sort => 'NEWSORTVALUE'));
+		unset($sortParams['url']);
 		$results->SortControl = DropdownField::create($qs_sort, '', $options, $results->Sort)
-			->setAttribute('data-url', HTTP::setGetVar($qs_sort, 'NEWSORTVALUE', $this->owner->getRequest()->getURL(true)));
+			->setAttribute('data-url', $baseLink . '?' . http_build_query($sortParams));
 
 		// a little more output management
 		$results->Title   = _t('ShopSearch.SearchResults', 'Search Results');
@@ -105,7 +107,8 @@ class ShopSearchControllerExtension extends Extension
 
 
 	/**
-	 * If there is a
+	 * If there is a search encoded in the link, go ahead and log it.
+	 * This happens when you click through on a search suggestion
 	 */
 	public function onAfterInit() {
 		$req = $this->owner->getRequest();
