@@ -193,7 +193,7 @@ class ShopSearch extends Object
 		$loggedFilters = !empty($filters) ? json_encode($filters) : null;
 		$loggedQuery   = strtolower($results->Query);
 		$searchHash    = md5($loggedFilters . $loggedQuery);
-		$sessSearches  = Session.get('loggedSearches');
+		$sessSearches  = Session::get('loggedSearches');
 		if (!is_array($sessSearches)) $sessSearches = array();
 
 		// save the log record
@@ -212,7 +212,7 @@ class ShopSearch extends Object
 			$results->SearchBreadcrumbs = $log->getBreadcrumbs();
 
 			$sessSearches[] = $searchHash;
-			Session.set('loggedSearches', $sessSearches);
+			Session::set('loggedSearches', $sessSearches);
 		}
 
 		return $results;
