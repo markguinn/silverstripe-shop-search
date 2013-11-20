@@ -3,24 +3,29 @@ Improved Search for Silverstripe Shop Submodule
 
 [![Build Status](https://secure.travis-ci.org/markguinn/silverstripe-shop-search.png)](http://travis-ci.org/markguinn/silverstripe-shop-search)
 
-This is very, very early stages. Probably not suitable for use yet.
-Full features + documentation coming soon. Check the comments for now.
+Provides more advanced search features that are common on e-commerce
+sites. It is intended for use with the Shop <https://github.com/burnbright/silverstripe-shop>
+module, but could probably be used in other contexts. There are few, if
+any dependencies on shop, and most of that has to do with configuration
+and could be worked around.
+
+
+FEATURES:
+---------
+- Keyword search
+- Remember search history
+- Search suggestions
+- Search-as-you-type (i.e. products displayed along with search suggestions)
+- Several types of filters and facets (link, checkboxes, range sliders)
+- Supports MySQL fulltext, Solr, or simple DataList :PartialMatch filtering
+- Category pages can also be faceted if desired
+
 
 REQUIREMENTS:
 -------------
 - Silverstripe 3.1 (3.0 may work but is untested and unsupported)
 - Shop Module 1.0
 - Fulltextsearch module (if using solr)
-
-
-FEATURES:
----------
-- Keyword search on multiple fields
-- Remember search history
-- Search suggestions
-- Filter based on attributes (i.e. facet)
-	- Facets need to be able to be different for different categories
-	- Some will be boolean and others enumeration of values
 
 
 INSTALLATION:
@@ -35,7 +40,7 @@ INSTALLATION:
 TODO:
 -----
 - Tests for Solr adapter
-- Figure out how to handle category filtering and parent/sub cats
+- Update documentation for Solr adapter
 
 
 DEVELOPERS:
