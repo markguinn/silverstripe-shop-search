@@ -272,6 +272,9 @@ class FacetHelper extends Object
 
 						$clickState = !$value->Active;
 						foreach ($facet->Values as $val2) {
+							// In this mode, we only actually send a filter for the lowest level items
+							if (!empty($facet->FilterOnlyLeaves) && !empty($val2->Children)) continue;
+
 							$active = (isset($meAndMyKids[$val2->Value])) ? $clickState : $val2->Active;
 							if ($active) $f[] = $val2->Value;
 						}
@@ -329,9 +332,9 @@ class FacetHelper extends Object
 				} else {
 					$filterVals = $filters[$facet->Source];
 					if (!is_array($filterVals)) $filterVals = array($filterVals);
-					foreach ($facet->Values as &$value) {
-						$value->Active = in_array($value->Value, $filterVals);
-					}
+					$this->updateCheckboxFacetState(
+						!empty($facet->NestedValues) ? $facet->NestedValues : $facet->Values,
+						$filterVals, !empty($facet->FilterOnlyLeaves));
 				}
 			} elseif ($facet->Type == ShopSearch::FACET_TYPE_RANGE) {
 				if (!empty($filters[$facet->Source]) && preg_match('/^RANGE\~(.+)\~(.+)$/', $filters[$facet->Source], $m)) {
@@ -342,6 +345,30 @@ class FacetHelper extends Object
 		}
 
 		return $facets;
+	}
+
+
+	/**
+	 * For checkboxes, updates the state based on filters. Handles hierarchies and FilterOnlyLeaves
+	 * @param ArrayList $values
+	 * @param array     $filterVals
+	 * @param bool      $filterOnlyLeaves [optional]
+	 * @return bool - true if any of the children are true, false if all children are false
+	 */
+	protected function updateCheckboxFacetState(ArrayList $values, array $filterVals, $filterOnlyLeaves=false) {
+		$out = false;
+
+		foreach ($values as $value) {
+			if ($filterOnlyLeaves && !empty($value->Children)) {
+				$value->Active = $this->updateCheckboxFacetState($value->Children, $filterVals, $filterOnlyLeaves);
+			} else {
+				$value->Active = in_array($value->Value, $filterVals);
+			}
+
+			if ($value->Active) $out = true;
+		}
+
+		return $out;
 	}
 
 

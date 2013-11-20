@@ -186,6 +186,7 @@ class ShopSearch extends Object
 
 		// for some types of facets, update the state
 		if ($results->hasValue('Facets')) {
+			FacetHelper::inst()->transformHierarchies($results->Facets);
 			FacetHelper::inst()->updateFacetState($results->Facets, $filters);
 		}
 
