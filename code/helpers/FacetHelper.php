@@ -264,9 +264,15 @@ class FacetHelper extends Object
 					if (!isset($params[$qs_f])) $params[$qs_f] = array();
 					if ($facet->Type == ShopSearch::FACET_TYPE_CHECKBOX) {
 						$f = array();
+
+						// Fill the proposed filter state with the current state,
+						// then add/substract this item and it's kids
+						$meAndMyKids = array($value->Value => $value->Value);
+						if (!empty($value->Children)) $meAndMyKids += $this->getRecursiveChildValues($value->Children);
+
+						$clickState = !$value->Active;
 						foreach ($facet->Values as $val2) {
-							$active = $val2->Active;
-							if ($value->Value == $val2->Value) $active = !$active;
+							$active = (isset($meAndMyKids[$val2->Value])) ? $clickState : $val2->Active;
 							if ($active) $f[] = $val2->Value;
 						}
 
@@ -284,6 +290,22 @@ class FacetHelper extends Object
 		}
 
 		return $facets;
+	}
+
+
+	/**
+	 * @param ArrayList $children
+	 * @return array
+	 */
+	protected function getRecursiveChildValues(ArrayList $children) {
+		$out = array();
+
+		foreach ($children as $child) {
+			$out[$child->Value] = $child->Value;
+			if (!empty($child->Children)) $out += $this->getRecursiveChildValues($child->Children);
+		}
+
+		return $out;
 	}
 
 
@@ -321,4 +343,59 @@ class FacetHelper extends Object
 
 		return $facets;
 	}
+
+
+	/**
+	 * If there are any facets (link or checkbox) that have a HierarchyDivider field
+	 * in the spec, transform them into a hierarchy so they can be displayed as such.
+	 *
+	 * @param ArrayList $facets
+	 * @return ArrayList
+	 */
+	public function transformHierarchies(ArrayList $facets) {
+		foreach ($facets as $facet) {
+			if (!empty($facet->HierarchyDivider)) {
+				$out = new ArrayList();
+				$parentStack = array();
+
+				foreach ($facet->Values as $value) {
+					if (empty($value->Label)) continue;
+					$value->FullLabel = $value->Label;
+
+					// Look for the most recent parent that matches the beginning of this one
+					while (count($parentStack) > 0) {
+						$curParent = $parentStack[ count($parentStack)-1 ];
+						if (strpos($value->Label, $curParent->FullLabel) === 0) {
+							if (!isset($curParent->Children)) $curParent->Children = new ArrayList();
+
+							// Modify the name so we only show the last component
+							$value->FullLabel = $value->Label;
+							$p = strrpos($value->Label, $facet->HierarchyDivider);
+							if ($p > -1) $value->Label = trim( substr($value->Label, $p + 1) );
+
+							$curParent->Children->push($value);
+							break;
+						} else {
+							array_pop($parentStack);
+						}
+					}
+
+					// If we went all the way back to the root without a match, this is
+					// a new parent item
+					if (count($parentStack) == 0) {
+						$out->push($value);
+					}
+
+					// Each item could be a potential parent. If it's not it will get popped
+					// immediately on the next iteration
+					$parentStack[] = $value;
+				}
+
+				$facet->NestedValues = $out;
+			}
+		}
+
+		return $facets;
+	}
+
 }

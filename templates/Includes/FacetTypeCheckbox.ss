@@ -1,6 +1,14 @@
 <h4>$Label</h4>
-<ul>
-	<% loop $Values %>
-		<li><label data-url="$Link"><input type="checkbox" value="$Value" <% if $Active %>checked<% end_if %>> $Label</label></li>
-	<% end_loop %>
-</ul>
+<% if $NestedValues %>
+	<ul data-hierarchy="true">
+		<% loop $NestedValues %>
+			<% include FacetTypeCheckboxInner %>
+		<% end_loop %>
+	</ul>
+<% else %>
+	<ul>
+		<% loop $Values %>
+			<% include FacetTypeCheckboxInner %>
+		<% end_loop %>
+	</ul>
+<% end_if %>

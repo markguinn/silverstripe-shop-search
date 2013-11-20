@@ -32,6 +32,7 @@ class ShopSearchControllerExtension extends Extension
 			$qs_ps      = Config::inst()->get('ShopSearch', 'qs_parent_search');
 			$baseParams = array_merge($data, array($qs_ps => $results->SearchLogID));
 			unset($baseParams['url']);
+			$results->Facets = FacetHelper::inst()->transformHierarchies($results->Facets);
 			$results->Facets = FacetHelper::inst()->insertFacetLinks($results->Facets, $baseParams, $baseLink);
 		}
 
