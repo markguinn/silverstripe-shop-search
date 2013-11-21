@@ -3,7 +3,7 @@
 		<input type="checkbox" value="$Value" <% if $Active %>checked<% end_if %>> $Label <% if $Count %><span class="count">($Count)</span><% end_if %>
 	</label>
 	<% if $Children %>
-		<ul>
+		<ul data-hierarchy="true">
 			<% loop $Children %>
 				<% include FacetTypeCheckboxInner ParentValue=$Up.Value %>
 			<% end_loop %>

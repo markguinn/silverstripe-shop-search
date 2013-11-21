@@ -42,9 +42,10 @@
 				change:function(event, ui) {
 					var url = input.data('url');
 					if (url) {
-						document.location.href = url
+						url = url
 							.replace('RANGEFACETLABEL', encodeURIComponent(label.html()))
 							.replace('RANGEFACETVALUE', encodeURIComponent('RANGE~' + ui.values.join('~')));
+						$(document.body).trigger('searchstate', url);
 					}
 				}
 			});

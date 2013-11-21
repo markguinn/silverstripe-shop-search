@@ -183,7 +183,7 @@ class ShopSearchSolr extends SolrIndex implements ShopSearchAdapter
 		// search by filter
 		foreach ($filters as $k => $v) {
 			if (isset($this->fieldMap[$k])) {
-				if (preg_match('/^RANGE\~(.+)\~(.+)$/', $v, $m)) {
+				if (is_string($v) && preg_match('/^RANGE\~(.+)\~(.+)$/', $v, $m)) {
 					// Is it a range value?
 					$range = new SearchQuery_Range($m[1], $m[2]);
 					$query->filter($this->fieldMap[$k], $range);

@@ -147,16 +147,18 @@ class ShopSearch extends Object
 	 * @param array $vars
 	 * @param bool $logSearch [optional]
 	 * @param bool $useFacets [optional]
+	 * @param int $start [optional]
+	 * @param int $limit [optional]
 	 * @return ArrayData
 	 */
-	public function search(array $vars, $logSearch=true, $useFacets=true) {
+	public function search(array $vars, $logSearch=true, $useFacets=true, $start=-1, $limit=-1) {
 		$qs_q   = $this->config()->get('qs_query');
 		$qs_f   = $this->config()->get('qs_filters');
 		$qs_ps  = $this->config()->get('qs_parent_search');
 		$qs_t   = $this->config()->get('qs_title');
 		$qs_sort= $this->config()->get('qs_sort');
-		$limit  = $this->config()->get('page_size');
-		$start  = !empty($vars['start']) ? (int)$vars['start'] : 0; // as far as i can see, fulltextsearch hard codes 'start'
+		if ($limit < 0) $limit  = $this->config()->get('page_size');
+		if ($start < 0) $start  = !empty($vars['start']) ? (int)$vars['start'] : 0; // as far as i can see, fulltextsearch hard codes 'start'
 		$facets = $useFacets ? $this->config()->get('facets') : array();
 		if (!is_array($facets)) $facets = array();
 		if (empty($limit)) $limit = -1;
@@ -181,8 +183,12 @@ class ShopSearch extends Object
 		// massage the results a bit
 		if (!empty($keywords) && !$results->hasValue('Query')) $results->Query = $keywords;
 		if (!empty($filters) && !$results->hasValue('Filters')) $results->Filters = new ArrayData($filters);
-		if (!$results->hasValue('TotalMatches')) $results->TotalMatches = $results->Matches->count();
 		if (!$results->hasValue('Sort')) $results->Sort = $sort;
+		if (!$results->hasValue('TotalMatches')) {
+			$results->TotalMatches = $results->hasMethod('getTotalItems')
+				? $results->Matches->getTotalItems()
+				: $results->Matches->count();
+		}
 
 		// for some types of facets, update the state
 		if ($results->hasValue('Facets')) {

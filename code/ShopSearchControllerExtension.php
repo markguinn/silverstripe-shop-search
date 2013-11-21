@@ -40,13 +40,25 @@ class ShopSearchControllerExtension extends Extension
 		$options    = Config::inst()->get('ShopSearch', 'sort_options');
 		$sortParams = array_merge($data, array($qs_sort => 'NEWSORTVALUE'));
 		unset($sortParams['url']);
-		$results->SortControl = DropdownField::create($qs_sort, '', $options, $results->Sort)
+		$results->SortControl = DropdownField::create($qs_sort, ShopSearch::config()->sort_label, $options, $results->Sort)
 			->setAttribute('data-url', $baseLink . '?' . http_build_query($sortParams));
 
 		// a little more output management
-		$results->Title   = _t('ShopSearch.SearchResults', 'Search Results');
+		$titlePattern   = ShopSearch::config()->results_title;
+		$results->Title = $titlePattern && !empty($results->Query)
+			? sprintf($titlePattern, $results->Query)
+			: _t('ShopSearch.SearchResults', 'Search Results');
 		$results->Results = $results->Matches;
-		return $this->owner->customise($results)->renderWith(array('Page_results', 'Page'));
+
+		// Some sites use ClassName as a css class or template decision maker
+		$extraParams = ShopSearch::config()->results_template_params;
+		if (!empty($extraParams)) {
+			foreach ($extraParams as $k => $v) {
+				$results->$k = $v;
+			}
+		}
+
+		return $this->owner->customise($results)->renderWith(array('ShopSearch_results', 'Page_results', 'Page'));
 	}
 
 
@@ -64,7 +76,7 @@ class ShopSearchControllerExtension extends Extension
 		$products    = array();
 		if (Config::inst()->get('ShopSearch', 'search_as_you_type_enabled')) {
 			$searchVars = $req->requestVars();
-			$searchVars[ Config::inst()->get('ShopSearch', 'qs_query') ] = $searchVars['term'];
+			$searchVars[ ShopSearch::config()->qs_query ] = $searchVars['term'];
 			unset($searchVars['term']);
 			$limit      = (int)Config::inst()->get('ShopSearch', 'sayt_limit');
 			$search     = ShopSearch::inst()->search($searchVars, false, false, 0, $limit);
@@ -132,4 +144,15 @@ class ShopSearchControllerExtension extends Extension
 			$this->owner->redirect($req->getURL(false));
 		}
 	}
+
+
+	/**
+	 * @param ArrayData $results
+	 * @param array     $data
+	 * @return string
+	 */
+	protected function generateLongTitle(ArrayData $results, array $data) {
+
+	}
+
 }
