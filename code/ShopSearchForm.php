@@ -32,11 +32,11 @@ class ShopSearchForm extends Form
 		if ($suggestURL) $searchField->setAttribute('data-suggest-url', $suggestURL);
 
 		$fields = new FieldList($searchField);
-		if (!Config::inst()->get('ShopSearchForm', 'disable_category_dropdown')) {
-			$cats     = ShopSearch::get_category_hierarchy(0, '', Config::inst()->get('ShopSearchForm', 'category_max_depth'));
+		if (!self::config()->disable_category_dropdown) {
+			$cats     = ShopSearch::get_category_hierarchy(0, '', self::config()->category_max_depth);
 			$catField = new DropdownField(self::get_category_field(), '', $cats);
 
-			$emptyString = Config::inst()->get('ShopSearchForm', 'category_empty_string');
+			$emptyString = self::config()->category_empty_string;
 			if ($emptyString !== 'NONE') {
 				$catField->setEmptyString(_t('ShopSearch.'.$emptyString, $emptyString));
 			}
@@ -48,6 +48,7 @@ class ShopSearchForm extends Form
 
 		$this->setFormMethod('GET');
 		$this->disableSecurityToken();
+		if ($c = self::config()->css_classes) $this->addExtraClass($c);
 
 		Requirements::css(SHOP_SEARCH_FOLDER . '/css/ShopSearch.css');
 

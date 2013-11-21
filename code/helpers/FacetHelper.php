@@ -334,7 +334,8 @@ class FacetHelper extends Object
 					if (!is_array($filterVals)) $filterVals = array($filterVals);
 					$this->updateCheckboxFacetState(
 						!empty($facet->NestedValues) ? $facet->NestedValues : $facet->Values,
-						$filterVals, !empty($facet->FilterOnlyLeaves));
+						$filterVals,
+						!empty($facet->FilterOnlyLeaves));
 				}
 			} elseif ($facet->Type == ShopSearch::FACET_TYPE_RANGE) {
 				if (!empty($filters[$facet->Source]) && preg_match('/^RANGE\~(.+)\~(.+)$/', $filters[$facet->Source], $m)) {
@@ -360,7 +361,15 @@ class FacetHelper extends Object
 
 		foreach ($values as $value) {
 			if ($filterOnlyLeaves && !empty($value->Children)) {
-				$value->Active = $this->updateCheckboxFacetState($value->Children, $filterVals, $filterOnlyLeaves);
+				if (in_array($value->Value, $filterVals)) {
+					// This wouldn't be normal, but even if it's not a leaf, we want to handle
+					// the case where a filter might be set for this node. It should still show up correctly.
+					$value->Active = true;
+					foreach ($value->Children as $c) $c->Active = true;
+					// TODO: handle more than one level of recursion here
+				} else {
+					$value->Active = $this->updateCheckboxFacetState($value->Children, $filterVals, $filterOnlyLeaves);
+				}
 			} else {
 				$value->Active = in_array($value->Value, $filterVals);
 			}
