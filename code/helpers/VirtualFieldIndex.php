@@ -207,10 +207,11 @@ class VirtualFieldIndex extends DataExtension
 
 	/**
 	 * @param string $field
-	 * @param bool   $fromSource
+	 * @param bool   $fromSource [optional] - if true, it will regenerate the data from the source fields
+	 * @param bool   $forceIDs [optional] - if true, it will return an ID even if the norm is to return a DataObject
 	 * @return string|array|SS_List
 	 */
-	public function getVFI($field, $fromSource=false) {
+	public function getVFI($field, $fromSource=false, $forceIDs=false) {
 		$spec = $this->getVFISpec($field);
 		if (!$spec) return null;
 		if ($fromSource) {
@@ -233,7 +234,7 @@ class VirtualFieldIndex extends DataExtension
 		} else {
 			$val = $this->owner->getField($this->getVFIFieldName($field));
 			if ($spec['Type'] == self::TYPE_LIST) {
-				return self::decode_list($val);
+				return self::decode_list($val, $forceIDs);
 			} else {
 				return $val;
 			}
