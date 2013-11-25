@@ -84,7 +84,7 @@ class ShopSearchControllerExtension extends Extension
 			$searchVars['total'] = $search->TotalMatches; // this gets encoded into the product links
 
 			foreach ($prodList as $prod) {
-				$img  = $img = $prod->Image();
+				$img = $prod->hasMethod('ProductImage') ? $prod->ProductImage() : $prod->Image();
 
 				$json = array(
 					'link'  => $prod->Link() . '?' . Config::inst()->get('ShopSearch', 'qs_source') . '=' . urlencode(base64_encode(json_encode($searchVars))),
