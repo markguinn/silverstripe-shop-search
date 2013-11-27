@@ -154,6 +154,12 @@ class ShopSearchSolr extends SolrIndex implements ShopSearchAdapter
 	function getFieldDefinitions() {
 		$xml = parent::getFieldDefinitions();
 		$xml .= "\n\t\t<field name='_spellcheckContent' type='htmltext' indexed='true' stored='false' multiValued='true' />";
+
+		if (isset($this->fieldMap['Title'])) {
+			$xml .= "\n\t\t" . '<field name="_titleSort" type="alphaOnlySort" indexed="true" stored="false" required="false" multiValued="false" />';
+			$xml .= "\n\t\t" . '<copyField source="SiteTree_Title" dest="_titleSort"/>';
+		}
+
 		return $xml;
 	}
 
@@ -176,6 +182,9 @@ class ShopSearchSolr extends SolrIndex implements ShopSearchAdapter
 		$params = array(
 			'sort'  => $sort,
 		);
+
+		// swap out title search
+		if ($params['sort'] == 'SiteTree_Title') $params['sort'] = '_titleSort';
 
 		// search by keywords
 		$query->search(empty($keywords) ? '*:*' : $keywords);
