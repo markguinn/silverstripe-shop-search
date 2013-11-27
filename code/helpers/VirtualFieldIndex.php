@@ -243,6 +243,16 @@ class VirtualFieldIndex extends DataExtension
 
 
 	/**
+	 * Template version
+	 * @param string $field
+	 * @return string|array|SS_List
+	 */
+	public function VFI($field) {
+		return $this->getVFI($field);
+	}
+
+
+	/**
 	 * @param array $list
 	 * @return string
 	 */
