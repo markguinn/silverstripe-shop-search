@@ -13,6 +13,9 @@
  */
 class FacetHelper extends Object
 {
+	/** @var bool - if this is turned on it will use an algorith that doesn't require traversing the dataset if possible */
+	private static $faster_faceting = false;
+
 	/**
 	 * @return FacetHelper
 	 */
@@ -125,13 +128,15 @@ class FacetHelper extends Object
 	 * maybe you have unlimited time and can refactor this feature
 	 * and submit a pull request...
 	 *
-	 * TODO: If this is going to be used for categories we're going
+	 * TODO: If this is going to be used for categories we're going	 *
 	 * to have to really clean it up and speed it up.
 	 * Suggestion:
 	 *  - option to turn off counts
 	 *  - switch order of nested array so we don't go through results unless needed
 	 *  - if not doing counts, min/max and link facets can be handled w/ queries
 	 *  - separate that bit out into a new function
+	 * NOTE: This is partially done with the "faster_faceting" config
+	 * option but more could be done, particularly by covering link facets as well.
 	 *
 	 * Output - list of ArrayData in the format:
 	 *   Label - name of the facet
@@ -146,10 +151,21 @@ class FacetHelper extends Object
 	public function buildFacets(SS_List $matches, array $facetSpec) {
 		$facets = $this->expandFacetSpec($facetSpec);
 		if (empty($facets) || !$matches || !$matches->count()) return new ArrayList();
+		$fasterMethod = (bool)$this->config()->faster_faceting;
 
 		// fill them in
-		foreach ($matches as $rec) {
-			foreach ($facets as $field => &$facet) {
+		foreach ($facets as $field => &$facet) {
+			// NOTE: using this method range and checkbox facets don't get counts
+			if ($fasterMethod && $facet['Type'] != ShopSearch::FACET_TYPE_LINK) {
+				if ($facet['Type'] == ShopSearch::FACET_TYPE_RANGE) {
+					if (isset($facet['RangeMin'])) $facet['MinValue'] = $facet['RangeMin'];
+					if (isset($facet['RangeMax'])) $facet['MaxValue'] = $facet['RangeMax'];
+				}
+
+				continue;
+			}
+
+			foreach ($matches as $rec) {
 				// If it's a range facet, set up the min/max
 				if ($facet['Type'] == ShopSearch::FACET_TYPE_RANGE) {
 					if (isset($facet['RangeMin'])) $facet['MinValue'] = $facet['RangeMin'];
