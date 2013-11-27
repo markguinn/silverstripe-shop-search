@@ -44,18 +44,14 @@ class ShopSearchControllerExtension extends Extension
 			->setAttribute('data-url', $baseLink . '?' . http_build_query($sortParams));
 
 		// a little more output management
-		$titlePattern   = ShopSearch::config()->results_title;
-		$results->Title = $titlePattern && !empty($results->Query)
-			? sprintf($titlePattern, $results->Query)
-			: _t('ShopSearch.SearchResults', 'Search Results');
-		$results->Results = $results->Matches;
+		$results->Title = "Search Results";
 
-		// Some sites use ClassName as a css class or template decision maker
-		$extraParams = ShopSearch::config()->results_template_params;
-		if (!empty($extraParams)) {
-			foreach ($extraParams as $k => $v) {
-				$results->$k = $v;
-			}
+		// Give a hook for the parent controller to format the results, for example,
+		// interpreting filters in a specific way to affect the title or content
+		// when no results are returned. Since this is domain-specific we just leave
+		// it up to the host app.
+		if ($this->owner->hasMethod('onBeforeSearchDisplay')) {
+			$this->owner->onBeforeSearchDisplay($results);
 		}
 
 		return $this->owner->customise($results)->renderWith(array('ShopSearch_results', 'Page_results', 'Page'));
