@@ -66,42 +66,18 @@ class ShopSearchControllerExtension extends Extension
 		/** @var SS_HTTPResponse $response */
 		$response    = $this->owner->getResponse();
 		$callback    = $req->requestVar('callback');
-		$suggestions = ShopSearch::inst()->suggest($req->requestVar('term'));
 
 		// convert the search results into usable json for search-as-you-type
-		$products    = array();
-		if (Config::inst()->get('ShopSearch', 'search_as_you_type_enabled')) {
+		if (ShopSearch::config()->search_as_you_type_enabled) {
 			$searchVars = $req->requestVars();
 			$searchVars[ ShopSearch::config()->qs_query ] = $searchVars['term'];
 			unset($searchVars['term']);
-			$limit      = (int)Config::inst()->get('ShopSearch', 'sayt_limit');
-			$search     = ShopSearch::inst()->search($searchVars, false, false, 0, $limit);
-			$prodList   = $search->Matches;
-			$searchVars['total'] = $search->TotalMatches; // this gets encoded into the product links
-
-			foreach ($prodList as $prod) {
-				$img = $prod->hasMethod('ProductImage') ? $prod->ProductImage() : $prod->Image();
-
-				$json = array(
-					'link'  => $prod->Link() . '?' . Config::inst()->get('ShopSearch', 'qs_source') . '=' . urlencode(base64_encode(json_encode($searchVars))),
-					'title' => $prod->Title,
-					'desc'  => $prod->obj('Content')->Summary(),
-					'thumb' => ($img && $img->exists()) ? $img->getThumbnail()->Link() : '',
-					'price' => $prod->getPrice()->Nice(),
-				);
-
-				if ($prod->hasExtension('HasPromotionalPricing') && $prod->hasValidPromotion()) {
-					$json['original_price'] = $prod->getOriginalPrice()->Nice();
-				}
-
-				$products[] = $json;
-			}
+			$results = ShopSearch::inst()->suggestWithResults($searchVars);
+		} else {
+			$results = array(
+				'suggestions'   => ShopSearch::inst()->suggest($req->requestVar('term')),
+			);
 		}
-
-		$results     = array(
-			'suggestions'   => $suggestions,
-			'products'      => $products,
-		);
 
 		if ($callback) {
 			$response->addHeader('Content-type', 'application/javascript');

@@ -149,20 +149,74 @@ class ShopSearchSolr extends SolrIndex implements ShopSearchAdapter
 
 
 	/**
-	 * @return string|void
+	 * @return string
 	 */
 	function getFieldDefinitions() {
 		$xml = parent::getFieldDefinitions();
-		$xml .= "\n\t\t<field name='_spellcheckContent' type='htmltext' indexed='true' stored='false' multiValued='true' />";
+//		$xml .= "\n\t\t<field name='_spellcheckContent' type='htmltext' indexed='true' stored='false' multiValued='true' />";
 
+		// create a sorting column
 		if (isset($this->fieldMap['Title'])) {
 			$xml .= "\n\t\t" . '<field name="_titleSort" type="alphaOnlySort" indexed="true" stored="false" required="false" multiValued="false" />';
 			$xml .= "\n\t\t" . '<copyField source="SiteTree_Title" dest="_titleSort"/>';
 		}
 
+		// create an autocomplete column
+		if (ShopSearch::config()->suggest_enabled) {
+			$xml .= "\n\t\t<field name='_autocomplete' type='autosuggest_text' indexed='true' stored='false' multiValued='true'/>";
+		}
+
 		return $xml;
 	}
 
+
+	/**
+	 * @return string
+	 */
+	function getCopyFieldDefinitions() {
+		$xml = parent::getCopyFieldDefinitions();
+
+		if (ShopSearch::config()->suggest_enabled) {
+			foreach ($this->fulltextFields as $name => $field) {
+				$xml .= "\n\t<copyField source='{$name}' dest='_autocomplete' />";
+				//$xml .= "\n\t<copyField source='{$name}' dest='_spellcheckContent' />";
+			}
+		}
+
+		return $xml;
+	}
+
+
+		/**
+	 * Overrides the parent to add a field for autocomplete
+	 * @return HTMLText
+	 */
+	function getTypes() {
+		$val = parent::getTypes();
+		if (!$val || !is_object($val)) return $val;
+		$xml = $val->getValue();
+		$xml .= <<<XML
+
+	        <fieldType name="autosuggest_text" class="solr.TextField"
+	                   positionIncrementGap="100">
+	            <analyzer type="index">
+	                <tokenizer class="solr.StandardTokenizerFactory"/>
+	                <filter class="solr.LowerCaseFilterFactory"/>
+	                <filter class="solr.ShingleFilterFactory" minShingleSize="2" maxShingleSize="4" outputUnigrams="true" outputUnigramsIfNoShingles="true" />
+	                <filter class="solr.PatternReplaceFilterFactory" pattern="^([0-9. ])*$" replacement=""
+	                        replace="all"/>
+	                <filter class="solr.RemoveDuplicatesTokenFilterFactory"/>
+	            </analyzer>
+	            <analyzer type="query">
+	                <tokenizer class="solr.StandardTokenizerFactory"/>
+	                <filter class="solr.LowerCaseFilterFactory"/>
+	            </analyzer>
+	        </fieldType>
+
+XML;
+		$val->setValue($xml);
+		return $val;
+	}
 
 	/**
 	 * This is an intermediary to bridge the search form input
@@ -177,7 +231,7 @@ class ShopSearchSolr extends SolrIndex implements ShopSearchAdapter
 	 * @param string $sort [optional]
 	 * @return ArrayData
 	 */
-	function searchFromVars($keywords, array $filters=array(), array $facetSpec=array(), $start=-1, $limit=-1, $sort='score desc') {
+	public function searchFromVars($keywords, array $filters=array(), array $facetSpec=array(), $start=-1, $limit=-1, $sort='score desc') {
 		$query = new SearchQuery();
 		$params = array(
 			'sort'  => $sort,
@@ -212,6 +266,193 @@ class ShopSearchSolr extends SolrIndex implements ShopSearchAdapter
 		return $this->search($query, $start, $limit, $params, $facetSpec);
 	}
 
+
+	/**
+	 * @param string $keywords
+	 * @param array  $filters
+	 * @return array
+	 */
+	public function suggestWithResults($keywords, array $filters = array()) {
+		$limit      = (int)ShopSearch::config()->sayt_limit;
+
+		// process the keywords a bit
+		$terms      = preg_split('/\s+/', trim(strtolower($keywords)));
+		$lastTerm   = count($terms) > 0 ? array_pop($terms) : '';
+		$prefix     = count($terms) > 0 ? implode(' ', $terms) . ' ' : '';
+		$terms[]    = $lastTerm;
+		$terms[]    = $lastTerm . '*'; // this allows for partial words to still match
+
+		// convert that to something solr adapater can handle
+		$query = new SearchQuery();
+		$query->search(implode(' ', $terms) . ' ' . $lastTerm . '*');
+
+		$params = array(
+			'sort'          => 'score desc',
+			'facet'         => 'true',
+			'facet.field'   => '_autocomplete',
+			'facet.limit'   => ShopSearch::config()->suggest_limit,
+			'facet.prefix'  => $lastTerm,
+		);
+
+//		$facetSpec = array(
+//			'_autocomplete' => array(
+//				'Type'      => ShopSearch::FACET_TYPE_LINK,
+//				'Label'     => 'Suggestions',
+//				'Source'    => '_autocomplete',
+//			),
+//		);
+//
+//		Debug::dump($query);
+//
+//		$search     = $this->search($query, 0, $limit, $params, $facetSpec);
+//		Debug::dump($search);
+//		$prodList   = $search->Matches;
+//
+//		$suggestsion = array();
+////		if ($)
+
+		$service = $this->getService();
+
+		SearchVariant::with(count($query->classes) == 1 ? $query->classes[0]['class'] : null)->call('alterQuery', $query, $this);
+
+		$q = $terms;
+		$fq = array();
+
+		// Build the search itself
+//		foreach ($query->search as $search) {
+//			$text = $search['text'];
+//			preg_match_all('/"[^"]*"|\S+/', $text, $parts);
+//
+//			$fuzzy = $search['fuzzy'] ? '~' : '';
+//
+//			foreach ($parts[0] as $part) {
+//				$fields = (isset($search['fields'])) ? $search['fields'] : array();
+//				if(isset($search['boost'])) $fields = array_merge($fields, array_keys($search['boost']));
+//				if ($fields) {
+//					$searchq = array();
+//					foreach ($fields as $field) {
+//						$boost = (isset($search['boost'][$field])) ? '^' . $search['boost'][$field] : '';
+//						$searchq[] = "{$field}:".$part.$fuzzy.$boost;
+//					}
+//					$q[] = '+('.implode(' OR ', $searchq).')';
+//				}
+//				else {
+//					$q[] = '+'.$part.$fuzzy;
+//				}
+//			}
+//		}
+
+		// Filter by class if requested
+		$classq = array();
+
+		foreach ($query->classes as $class) {
+			if (!empty($class['includeSubclasses'])) $classq[] = 'ClassHierarchy:'.$class['class'];
+			else $classq[] = 'ClassName:'.$class['class'];
+		}
+
+		if ($classq) $fq[] = '+('.implode(' ', $classq).')';
+
+		// Filter by filters
+		foreach ($query->require as $field => $values) {
+			$requireq = array();
+
+			foreach ($values as $value) {
+				if ($value === SearchQuery::$missing) {
+					$requireq[] = "(*:* -{$field}:[* TO *])";
+				}
+				else if ($value === SearchQuery::$present) {
+					$requireq[] = "{$field}:[* TO *]";
+				}
+				else if ($value instanceof SearchQuery_Range) {
+					$start = $value->start; if ($start === null) $start = '*';
+					$end = $value->end; if ($end === null) $end = '*';
+					$requireq[] = "$field:[$start TO $end]";
+				}
+				else {
+					$requireq[] = $field.':"'.$value.'"';
+				}
+			}
+
+			$fq[] = '+('.implode(' ', $requireq).')';
+		}
+
+		foreach ($query->exclude as $field => $values) {
+			$excludeq = array();
+			$missing = false;
+
+			foreach ($values as $value) {
+				if ($value === SearchQuery::$missing) {
+					$missing = true;
+				}
+				else if ($value === SearchQuery::$present) {
+					$excludeq[] = "{$field}:[* TO *]";
+				}
+				else if ($value instanceof SearchQuery_Range) {
+					$start = $value->start; if ($start === null) $start = '*';
+					$end = $value->end; if ($end === null) $end = '*';
+					$excludeq[] = "$field:[$start TO $end]";
+				}
+				else {
+					$excludeq[] = $field.':"'.$value.'"';
+				}
+			}
+
+			$fq[] = ($missing ? "+{$field}:[* TO *] " : '') . '-('.implode(' ', $excludeq).')';
+		}
+
+		if(!headers_sent()) {
+			if ($q) header('X-Query: '.implode(' ', $q));
+			if ($fq) header('X-Filters: "'.implode('", "', $fq).'"');
+		}
+
+		$params = array_merge($params, array('fq' => implode(' ', $fq)));
+
+		$res = $service->search(
+			implode(' ', $q),
+			0,
+			$limit,
+			$params,
+			Apache_Solr_Service::METHOD_POST
+		);
+		Injector::inst()->get('Monolog')->debug("response", $res);
+
+		$results = new ArrayList();
+		if($res->getHttpStatus() >= 200 && $res->getHttpStatus() < 300) {
+			foreach ($res->response->docs as $doc) {
+				$result = DataObject::get_by_id($doc->ClassName, $doc->ID);
+				if($result) {
+					$results->push($result);
+				}
+			}
+			$numFound = $res->response->numFound;
+		} else {
+			$numFound = 0;
+		}
+
+		$ret = array();
+		$ret['products'] = new PaginatedList($results);
+		$ret['products']->setLimitItems(false);
+		$ret['products']->setTotalItems($numFound);
+		$ret['products']->setPageStart(0);
+		$ret['products']->setPageLength($limit);
+
+		// Facets (this is how we're doing suggestions for now...
+		$ret['suggestions'] = array();
+		if (isset($res->facet_counts->facet_fields->_autocomplete)) {
+			foreach ($res->facet_counts->facet_fields->_autocomplete as $term => $count) {
+				$ret['suggestions'][] = $prefix . $term;
+			}
+		}
+
+		Injector::inst()->get('Monolog')->debug("results", $ret);
+
+		// Suggestions (requires custom setup, assumes spellcheck.collate=true)
+//		if(isset($res->spellcheck->suggestions->collation)) {
+//			$ret['Suggestion'] = $res->spellcheck->suggestions->collation;
+//		}
+
+		return $ret;
+	}
 
 	/**
 	 * @param $facets

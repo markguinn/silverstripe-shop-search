@@ -52,6 +52,7 @@ class VirtualFieldIndex extends DataExtension
 	/** @var bool - used to prevent an infinite loop in onBeforeWrite */
 	protected $isRebuilding = false;
 
+	public static $disable_building = false;
 
     /**
      * @return array
@@ -335,7 +336,7 @@ class VirtualFieldIndex extends DataExtension
 	 * Trigger rebuild if needed
 	 */
 	public function onBeforeWrite() {
-		if ($this->isRebuilding) return;
+		if ($this->isRebuilding || self::$disable_building) return;
 		foreach ($this->getVFISpec() as $field => $spec) {
 			$rebuild = false;
 

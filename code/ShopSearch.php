@@ -185,7 +185,7 @@ class ShopSearch extends Object
 		if (!empty($filters) && !$results->hasValue('Filters')) $results->Filters = new ArrayData($filters);
 		if (!$results->hasValue('Sort')) $results->Sort = $sort;
 		if (!$results->hasValue('TotalMatches')) {
-			$results->TotalMatches = $results->hasMethod('getTotalItems')
+			$results->TotalMatches = $results->Matches->hasMethod('getTotalItems')
 				? $results->Matches->getTotalItems()
 				: $results->Matches->count();
 		}
@@ -263,6 +263,76 @@ class ShopSearch extends Object
 	 * @return array
 	 */
 	public function suggest($str='') {
-		return $this->getSuggestQuery($str)->execute()->column('Query');
+		$adapter = self::adapter();
+		if ($adapter->hasMethod('suggest')) {
+			return $adapter->suggest($str);
+		} else {
+			return $this->getSuggestQuery($str)->execute()->column('Query');
+		}
+	}
+
+
+	/**
+	 * Returns an array that can be made into json and passed to the controller
+	 * containing both term suggestions and a few product matches.
+	 *
+	 * @param array $searchVars
+	 * @return array
+	 */
+	public function suggestWithResults(array $searchVars) {
+		$qs_q       = $this->config()->get('qs_query');
+		$qs_f       = $this->config()->get('qs_filters');
+		$keywords   = !empty($searchVars[$qs_q]) ? $searchVars[$qs_q] : '';
+		$filters    = !empty($searchVars[$qs_f]) ? $searchVars[$qs_f] : array();
+
+		$adapter = self::adapter();
+
+		// get suggestions and product list from the adapter
+		if ($adapter->hasMethod('suggestWithResults')) {
+			$results = $adapter->suggestWithResults($keywords, $filters);
+		} else {
+			$limit      = (int)ShopSearch::config()->sayt_limit;
+			$search     = self::adapter()->searchFromVars($keywords, $filters, array(), 0, $limit, 'Popularity DESC');
+			//$search     = ShopSearch::inst()->search($searchVars, false, false, 0, $limit);
+
+			$results = array(
+				'products'      => $search->Matches,
+				'suggestions'   => $this->suggest($keywords),
+			);
+		}
+
+		// the adapter just gave us a list of products, which we need to process a little further
+		if (!empty($results['products'])) {
+			// this gets encoded into the product links
+			$searchVars['total'] = $results['products']->hasMethod('getTotalItems')
+				? $results['products']->getTotalItems()
+				: $results['products']->count();
+
+			$products   = array();
+			foreach ($results['products'] as $prod) {
+				if (!$prod || !$prod->exists()) continue;
+				$img = $prod->hasMethod('ProductImage') ? $prod->ProductImage() : $prod->Image();
+				$thumb = ($img && $img->exists()) ? $img->getThumbnail() : null;
+
+				$json = array(
+					'link'  => $prod->Link() . '?' . ShopSearch::config()->qs_source . '=' . urlencode(base64_encode(json_encode($searchVars))),
+					'title' => $prod->Title,
+					'desc'  => $prod->obj('Content')->Summary(),
+					'thumb' => $thumb ? $thumb->Link() : '',
+					'price' => $prod->getPrice()->Nice(),
+				);
+
+				if ($prod->hasExtension('HasPromotionalPricing') && $prod->hasValidPromotion()) {
+					$json['original_price'] = $prod->getOriginalPrice()->Nice();
+				}
+
+				$products[] = $json;
+			}
+
+			// replace the list of product objects with json
+			$results['products'] = $products;
+		}
+
+		return $results;
 	}
 }
