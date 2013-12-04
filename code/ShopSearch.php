@@ -104,7 +104,12 @@ class ShopSearch extends Object
 	 */
 	public static function get_category_hierarchy($parentID = 0, $prefix = '', $maxDepth = 999) {
 		$out = array();
-		$cats = ProductCategory::get()->filter('ParentID', $parentID)->sort('Sort');
+		$cats = ProductCategory::get()
+			->filter(array(
+				'ParentID'      => $parentID,
+				'ShowInMenus'   => 1,
+			))
+			->sort('Sort');
 
 		// If there is a single parent category (usually "Products" or something), we
 		// probably don't want that in the hierarchy.
