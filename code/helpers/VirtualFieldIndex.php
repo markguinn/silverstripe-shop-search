@@ -146,6 +146,7 @@ class VirtualFieldIndex extends DataExtension
 			$count  = $list->count();
 			for ($i = 0; $i < $count; $i += 10) {
 				$chunk = $list->limit(10, $i);
+//				if (Controller::curr() instanceof TaskRunner) echo "Processing VFI #$i...\n";
 				foreach ($chunk as $rec) $rec->rebuildVFI();
 			}
 		} else {

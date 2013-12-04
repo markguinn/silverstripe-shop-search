@@ -414,7 +414,6 @@ XML;
 			$params,
 			Apache_Solr_Service::METHOD_POST
 		);
-		Injector::inst()->get('Monolog')->debug("response", $res);
 
 		$results = new ArrayList();
 		if($res->getHttpStatus() >= 200 && $res->getHttpStatus() < 300) {
@@ -443,8 +442,6 @@ XML;
 				$ret['suggestions'][] = $prefix . $term;
 			}
 		}
-
-		Injector::inst()->get('Monolog')->debug("results", $ret);
 
 		// Suggestions (requires custom setup, assumes spellcheck.collate=true)
 //		if(isset($res->spellcheck->suggestions->collation)) {
