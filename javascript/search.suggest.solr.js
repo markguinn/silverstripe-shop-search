@@ -17,13 +17,14 @@
 					+ '?facet=true&sort=score+desc&start=0&facet.limit=5&json.nl=map&facet.field=_autocomplete'
 					+ '&wt=json&fq=%2B(_versionedstage:"Live"+(*:*+-_versionedstage:[*+TO+*]))&rows=5',
 //					+ '&q=jan+jan*'
-//					+ '&facet.prefix=jan'
+//					+ '&facet.prefix=jan',
 				cache       = {};
 
 			if (suggestURL && searchField.length > 0) {
 				searchField.autocomplete({
 					minLength:  2,
 					source:function(request, response){
+						console.log('request', request);
 						var cacheKey;
 						var term = request.term;
 						var select = searchField.closest('form').find('select');
@@ -40,30 +41,57 @@
 							return;
 						}
 
-						$.getJSON(suggestURL, request, function(data, status, xhr) {
-							// Result comes back with 2 arrays, transform them into something we can render more easily
-							// This is slightly more cumbersome, but it allows the frontend dev to use a different
-							// autocomplete (or whatever) javascript.
-							var out = [];
-							//var sug = data.
-							if (data.suggestions.length > 0) {
-								for (var i = 0; i < data.suggestions.length; i++) {
+						// Format the search terms for solr
+						var terms    = request.term.toLowerCase().split(/\s+/);
+						var lastTerm = terms.length > 0 ? terms.pop() : '';
+						var prefix   = terms.length > 0 ? terms.join(' ')+' ' : '';
+						terms.push(lastTerm);
+						terms.push(lastTerm+'*'); // this allows for partial words to still match
+
+						var url = suggestURL + '&q=' + encodeURIComponent(terms.join(' '))
+							+ '&facet.prefix=' + encodeURIComponent(lastTerm);
+
+						// TODO: add category filter if present
+
+						// Make the call
+						$.ajax({
+							url:        url,
+							//data:       request,
+							dataType:   'jsonp',
+							jsonp:      'json.wrf',
+							success:function(data, status, xhr) {
+								// Result comes back with 2 arrays, transform them into something we can render more easily
+								// This is slightly more cumbersome, but it allows the frontend dev to use a different
+								// autocomplete (or whatever) javascript.
+								var out = [];
+								var suggestions = data.facet_counts.facet_fields._autocomplete;
+								var products = data.response.docs;
+
+								for (var k in suggestions) {
+									var str = prefix + k;
 									out.push({
-										label:      data.suggestions[i],
+										label:      str.replace(lastTerm, '<strong>'+lastTerm+'</strong>'),
 										category:   'Search Suggestions'
 									});
 								}
-							}
 
-							if (data.products.length > 0) {
-								for (var i = 0; i < data.products.length; i++) {
-									data.products[i].category = 'Products';
-									out.push(data.products[i]);
+								if (products.length > 0) {
+									for (var i = 0; i < products.length; i++) {
+										var prod = {
+											category:   'Products',
+											link:       products[i].Product_Link,
+											title:      products[i].SiteTree_Title,
+											thumb:      products[i].Product_ThumbURL,
+											price:      products[i].Product_VFI_Price,
+											original_price: products[i].Product_BasePrice
+										};
+										out.push(prod);
+									}
 								}
-							}
 
-							cache[cacheKey] = out;
-							response(out);
+								cache[cacheKey] = out;
+								response(out);
+							}
 						});
 					}
 				});
