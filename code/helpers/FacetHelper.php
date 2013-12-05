@@ -242,7 +242,7 @@ class FacetHelper extends Object
 		// convert values to arraylist
 		$out = new ArrayList();
 		foreach ($facets as $f) {
-			ksort($f['Values']);
+			//ksort($f['Values']);
 			$f['Values'] = new ArrayList($f['Values']);
 			$out->push(new ArrayData($f));
 		}
