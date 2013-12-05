@@ -55,7 +55,8 @@ class ShopSearchForm extends Form
 		if (Config::inst()->get('ShopSearch', 'suggest_enabled')) {
 			Requirements::javascript(THIRDPARTY_DIR . '/jquery-ui/jquery-ui.js');
 			Requirements::css(THIRDPARTY_DIR . '/jquery-ui-themes/smoothness/jquery-ui.css');
-			Requirements::javascript(SHOP_SEARCH_FOLDER . '/javascript/ShopSearch.js');
+			Requirements::javascript(SHOP_SEARCH_FOLDER . '/javascript/search.suggest.js');
+			Requirements::javascript(SHOP_SEARCH_FOLDER . '/javascript/search.js');
 		}
 	}
 

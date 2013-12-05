@@ -44,6 +44,8 @@ class ShopSearchSolr extends SolrIndex implements ShopSearchAdapter
 			}
 		}
 
+//		Debug::dump($this->filterFields);
+
 		// Add spellcheck fields
 //		$spellFields = $cfg->get('ShopSearch', 'spellcheck_dictionary_source');
 //		if (empty($spellFields) || !is_array($spellFields)) {

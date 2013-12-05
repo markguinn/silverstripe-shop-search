@@ -4,5 +4,5 @@
 <label id="facet-label-$Source" class="range-facet-label" data-format="$LabelFormat"></label>
 
 <% require javascript('framework/thirdparty/jquery-ui/jquery-ui.js') %>
-<% require javascript('shop_search/javascript/FacetTypeRange.js') %>
+<% require javascript('shop_search/javascript/search.facets.range.js') %>
 <% require css('framework/thirdparty/jquery-ui-themes/smoothness/jquery-ui.css') %>
