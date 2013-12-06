@@ -68,9 +68,8 @@
 								var products = data.response.docs;
 
 								for (var k in suggestions) {
-									var str = prefix + k;
 									out.push({
-										label:      str.replace(lastTerm, '<strong>'+lastTerm+'</strong>'),
+										label:      prefix + k,
 										category:   'Search Suggestions'
 									});
 								}
