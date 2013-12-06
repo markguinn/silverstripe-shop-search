@@ -10,14 +10,27 @@
 	'use strict';
 	if (typeof window.ShopSearch == 'undefined') window.ShopSearch = {};
 
+	/**
+	 * @param priceIn
+	 * @returns string
+	 */
+	function formatCurrency(priceIn) {
+		priceIn = parseFloat(priceIn);
+		return isNaN(priceIn) ? '$0.00' : '$'+priceIn.toFixed(2);
+	}
+
 	window.ShopSearch.Suggest = {
+		Config:{
+			solrURL:            document.location.protocol + "//" + document.location.host + ':8983/solr/ShopSearchSolr/select',
+			filterShowInSearch: true,
+			categoryFilter:     'Product_AllCategoryIDsRecursive'
+		},
+
 		init:function(){
 			var searchField = $('#ShopSearchForm_SearchForm_q'),
-				suggestURL  = document.location.protocol + "//" + document.location.host + ':8983/solr/ShopSearchSolr/select'
+				suggestURL  = ShopSearch.Suggest.Config.solrURL
 					+ '?facet=true&sort=score+desc&start=0&facet.limit=5&json.nl=map&facet.field=_autocomplete'
 					+ '&wt=json&fq=%2B(_versionedstage:"Live"+(*:*+-_versionedstage:[*+TO+*]))&rows=5',
-//					+ '&q=jan+jan*'
-//					+ '&facet.prefix=jan',
 				cache       = {};
 
 			if (suggestURL && searchField.length > 0) {
@@ -48,10 +61,19 @@
 						terms.push(lastTerm);
 						terms.push(lastTerm+'*'); // this allows for partial words to still match
 
+						// build query into url
 						var url = suggestURL + '&q=' + encodeURIComponent(terms.join(' '))
 							+ '&facet.prefix=' + encodeURIComponent(lastTerm);
 
-						// TODO: add category filter if present
+						if (ShopSearch.Suggest.Config.filterShowInSearch) {
+							url += '&fq=SiteTree_ShowInSearch:1';
+						}
+
+						// add category filter if present (NOTE: this is very specific to my configuration right now
+						// I will add a better way to configure this in the future.
+						if (select.val()) {
+							url += '&fq=' + ShopSearch.Suggest.Config.categoryFilter + ':' + select.val();
+						}
 
 						// Make the call
 						$.ajax({
@@ -81,9 +103,13 @@
 											link:       products[i].Product_Link,
 											title:      products[i].SiteTree_Title,
 											thumb:      products[i].Product_ThumbURL,
-											price:      products[i].Product_VFI_Price,
-											original_price: products[i].Product_BasePrice
+											price:      formatCurrency(products[i].Product_VFI_Price),
 										};
+
+										if (products[i].Product_VFI_Price != products[i].Product_BasePrice) {
+											prod.original_price = formatCurrency(products[i].Product_BasePrice);
+										}
+
 										out.push(prod);
 									}
 								}
