@@ -26,6 +26,9 @@ class FacetedCategory extends SiteTreeExtension
 	/** @var bool - if true there will be a tab in the cms to disable some or all defined facets */
 	private static $show_disabled_facets_tab = true;
 
+	/** @var string - which method should we use to get the child products for FilteredProducts */
+	private static $products_method = 'ProductsShowable';
+
 
 	/**
 	 * @param FieldList $fields
@@ -76,7 +79,9 @@ class FacetedCategory extends SiteTreeExtension
 	 */
 	public function FilteredProducts($recursive=true) {
 		if (!isset($this->_filteredProducts)) {
-			$this->_filteredProducts = $this->owner->ProductsShowable($recursive);
+			$fn = self::config()->products_method;
+			if (empty($fn)) $fn = 'ProductsShowable';
+			$this->_filteredProducts = $this->owner->$fn($recursive);
 			$this->_filteredProducts = FacetHelper::inst()->addFiltersToDataList($this->_filteredProducts, $this->getFilters());
 		}
 
