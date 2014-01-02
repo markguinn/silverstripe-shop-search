@@ -79,7 +79,7 @@ class FacetedCategory extends SiteTreeExtension
 	 */
 	public function FilteredProducts($recursive=true) {
 		if (!isset($this->_filteredProducts)) {
-			$fn = self::config()->products_method;
+			$fn = Config::inst()->get('FacetedCategory', 'products_method');
 			if (empty($fn)) $fn = 'ProductsShowable';
 			$this->_filteredProducts = $this->owner->$fn($recursive);
 			$this->_filteredProducts = FacetHelper::inst()->addFiltersToDataList($this->_filteredProducts, $this->getFilters());
