@@ -16,6 +16,9 @@ class FacetHelper extends Object
 	/** @var bool - if this is turned on it will use an algorith that doesn't require traversing the dataset if possible */
 	private static $faster_faceting = false;
 
+	/** @var bool - should the facets (link and checkbox only) be sorted - this can mess with things like category lists */
+	private static $sort_facet_values = true;
+
 	/**
 	 * @return FacetHelper
 	 */
@@ -241,8 +244,9 @@ class FacetHelper extends Object
 
 		// convert values to arraylist
 		$out = new ArrayList();
+		$sortValues = self::config()->sort_facet_values;
 		foreach ($facets as $f) {
-			//ksort($f['Values']);
+			if ($sortValues) ksort($f['Values']);
 			$f['Values'] = new ArrayList($f['Values']);
 			$out->push(new ArrayData($f));
 		}

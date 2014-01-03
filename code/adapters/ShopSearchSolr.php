@@ -281,12 +281,12 @@ XML;
 		$terms      = preg_split('/\s+/', trim(strtolower($keywords)));
 		$lastTerm   = count($terms) > 0 ? array_pop($terms) : '';
 		$prefix     = count($terms) > 0 ? implode(' ', $terms) . ' ' : '';
-		$terms[]    = $lastTerm;
+		//$terms[]    = $lastTerm;
 		$terms[]    = $lastTerm . '*'; // this allows for partial words to still match
 
 		// convert that to something solr adapater can handle
 		$query = new SearchQuery();
-		$query->search(implode(' ', $terms) . ' ' . $lastTerm . '*');
+		$query->search('+' . implode(' +', $terms));
 
 		$params = array(
 			'sort'          => 'score desc',

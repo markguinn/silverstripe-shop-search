@@ -37,7 +37,7 @@
 				searchField.autocomplete({
 					minLength:  2,
 					source:function(request, response){
-						console.log('request', request);
+						//console.log('request', request);
 						var cacheKey;
 						var term = request.term;
 						var select = searchField.closest('form').find('select');
@@ -58,11 +58,11 @@
 						var terms    = request.term.toLowerCase().split(/\s+/);
 						var lastTerm = terms.length > 0 ? terms.pop() : '';
 						var prefix   = terms.length > 0 ? terms.join(' ')+' ' : '';
-						terms.push(lastTerm);
+						//terms.push(lastTerm);
 						terms.push(lastTerm+'*'); // this allows for partial words to still match
 
 						// build query into url
-						var url = suggestURL + '&q=' + encodeURIComponent(terms.join(' '))
+						var url = suggestURL + '&q=' + encodeURIComponent('+' + terms.join(' +'))
 							+ '&facet.prefix=' + encodeURIComponent(lastTerm);
 
 						if (ShopSearch.Suggest.Config.filterShowInSearch) {

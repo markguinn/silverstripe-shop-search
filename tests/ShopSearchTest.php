@@ -190,7 +190,7 @@ class ShopSearchTest extends SapphireTest
 		$this->assertEquals(1, $r->Facets->count(),     'There should be one facet');
 		$model = $r->Facets->first();
 		$this->assertEquals('By Model', $model->Label,  'Label should be correct');
-		$this->assertEquals(2, $model->Values->count(), 'Should be 3 values');
+		$this->assertEquals(2, $model->Values->count(), 'Should be 2 values');
 		$model1 = $model->Values->first();
 		$this->assertEquals('ABC', $model1->Label,      'Value label should be correct');
 		$this->assertEquals(1, $model1->Count,          'Value count should be correct');
