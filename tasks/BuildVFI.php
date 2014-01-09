@@ -12,7 +12,7 @@ class BuildVFI extends BuildTask
 	protected $title = 'Rebuild Virtual Field Indexes';
 	protected $description = 'Rebuild all VFI fields on all tables and records.';
 
-	static $recordsPerRequest = 200;
+	static $recordsPerRequest = 5000;
 
 	function old_run($request) {
 		$classes = VirtualFieldIndex::get_classes_with_vfi();
@@ -75,10 +75,11 @@ class BuildVFI extends BuildTask
 				$sqlQuery = $dtaQuery->getFinalisedQuery();
 				$singleton->extend('augmentSQL',$sqlQuery,$dtaQuery);
 				$total = $query->count();
+				$startFrom = isset($_GET['startfrom']) ? $_GET['startfrom'] : 0;
 
 				echo "Class: $class, total: $total\n\n";
 
-				for ($offset = 0; $offset < $total; $offset += $this->stat('recordsPerRequest')) {
+				for ($offset = $startFrom; $offset < $total; $offset += $this->stat('recordsPerRequest')) {
 					echo "$offset..";
 					$cmd = "php $script dev/tasks/$self class=$class start=$offset";
 					if($verbose) echo "\n  Running '$cmd'\n";
