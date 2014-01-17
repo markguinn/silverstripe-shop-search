@@ -69,6 +69,7 @@ class BuildVFI extends BuildTask
 
 			$classes = VirtualFieldIndex::get_classes_with_vfi();
 			foreach ($classes as $class) {
+				if (isset($_GET['class']) && $class != $_GET['class']) continue;
 				$singleton = singleton($class);
 				$query = $singleton->get($class);
 				$dtaQuery = $query->dataQuery();
