@@ -36,6 +36,9 @@ class ShopSearch extends Object
 	/** @var int - how may sayt (search-as-you-type) entries to provide */
 	private static $sayt_limit = 5;
 
+	/** @var bool - automatically create facets for static attributes */
+	private static $auto_facet_attributes = false;
+
 	/** @var string - these allow you to use different querystring params in you need to */
 	private static $qs_query         = 'q';
 	private static $qs_filters       = 'f';

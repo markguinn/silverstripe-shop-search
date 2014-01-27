@@ -42,3 +42,30 @@ Member:
     FirstName: Test
     Surname: Guy
     Email: test@guy.com
+
+
+ProductAttributeType:
+  pat1:
+    Name: Color
+    Label: Color
+  pat2:
+    Name: Size
+    Label: Size
+
+ProductAttributeValue:
+  pat1v1:
+    Value: Red
+    TypeID: =>ProductAttributeType.pat1
+  pat1v2:
+    Value: Green
+    TypeID: =>ProductAttributeType.pat1
+  pat1v3:
+    Value: Blue
+    TypeID: =>ProductAttributeType.pat1
+  pat2v1:
+    Value: Small
+    TypeID: =>ProductAttributeType.pat2
+  pat2v2:
+    Value: Large
+    TypeID: =>ProductAttributeType.pat2
+

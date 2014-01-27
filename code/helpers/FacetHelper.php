@@ -13,11 +13,15 @@
  */
 class FacetHelper extends Object
 {
-	/** @var bool - if this is turned on it will use an algorith that doesn't require traversing the dataset if possible */
+	/** @var bool - if this is turned on it will use an algorithm that doesn't require traversing the data set if possible */
 	private static $faster_faceting = false;
 
 	/** @var bool - should the facets (link and checkbox only) be sorted - this can mess with things like category lists */
 	private static $sort_facet_values = true;
+
+	/** @var string - I don't know why you'd want to override this, but you could if you wanted */
+	private static $attribute_facet_regex = '/^ATT(\d+)$/';
+
 
 	/**
 	 * @return FacetHelper
@@ -28,18 +32,35 @@ class FacetHelper extends Object
 
 
 	/**
-	 * @param SS_List $list
+	 * @param DataList $list
 	 * @param array    $filters
 	 * @param DataObject|string $sing - just a singleton object we can get information off of
-	 * @return SS_List
+	 * @return DataList
 	 */
-	public function addFiltersToDataList(SS_List $list, array $filters, $sing=null) {
+	public function addFiltersToDataList($list, array $filters, $sing=null) {
 		if (!$sing) $sing = singleton($list->dataClass());
 		if (is_string($sing)) $sing = singleton($sing);
 
 		if (!empty($filters)) {
 			foreach ($filters as $filterField => $filterVal) {
-				$list = $list->filter($this->processFilterField($sing, $filterField, $filterVal));
+				if ($sing->hasExtension('HasStaticAttributes') && preg_match(self::config()->attribute_facet_regex, $filterField, $matches)) {
+//					$sav = $sing->StaticAttributeValues();
+//					Debug::log("sav = {$sav->getJoinTable()}, {$sav->getLocalKey()}, {$sav->getForeignKey()}");
+//					$list = $list
+//						->innerJoin($sav->getJoinTable(), "\"{$sing->baseTable()}\".\"ID\" = \"{$sav->getJoinTable()}\".\"{$sav->getLocalKey()}\"")
+//						->filter("\"{$sav->getJoinTable()}\".\"{$sav->getForeignKey()}\"", $filterVal)
+//					;
+					// TODO: This logic should be something like the above, but I don't know
+					// how to get the join table from a singleton (which returns an UnsavedRelationList
+					// instead of a ManyManyList). I've got a deadline to meet, though, so this
+					// will catch the majority of cases as long as the extension is applied to the
+					// Product class instead of a subclass.
+					$list = $list
+						->innerJoin('Product_StaticAttributeValues', "\"SiteTree\".\"ID\" = \"Product_StaticAttributeValues\".\"ProductID\"")
+						->filter("Product_StaticAttributeValues.ProductAttributeValueID", $filterVal);
+				} else {
+					$list = $list->filter($this->processFilterField($sing, $filterField, $filterVal));
+				}
 			}
 		}
 
@@ -131,7 +152,7 @@ class FacetHelper extends Object
 	 * maybe you have unlimited time and can refactor this feature
 	 * and submit a pull request...
 	 *
-	 * TODO: If this is going to be used for categories we're going	 *
+	 * TODO: If this is going to be used for categories we're going
 	 * to have to really clean it up and speed it up.
 	 * Suggestion:
 	 *  - option to turn off counts
@@ -149,15 +170,21 @@ class FacetHelper extends Object
 	 *
 	 * @param SS_List $matches
 	 * @param array $facetSpec
+	 * @param bool $autoFacetAttributes [optional]
 	 * @return ArrayList
 	 */
-	public function buildFacets(SS_List $matches, array $facetSpec) {
+	public function buildFacets(SS_List $matches, array $facetSpec, $autoFacetAttributes=false) {
 		$facets = $this->expandFacetSpec($facetSpec);
-		if (empty($facets) || !$matches || !$matches->count()) return new ArrayList();
+		if (!$autoFacetAttributes && (empty($facets) || !$matches || !$matches->count())) return new ArrayList();
 		$fasterMethod = (bool)$this->config()->faster_faceting;
 
 		// fill them in
 		foreach ($facets as $field => &$facet) {
+			if (preg_match(self::config()->attribute_facet_regex, $field, $m)) {
+				$this->buildAttributeFacet($matches, $facet, $m[1]);
+				continue;
+			}
+
 			// NOTE: using this method range and checkbox facets don't get counts
 			if ($fasterMethod && $facet['Type'] != ShopSearch::FACET_TYPE_LINK) {
 				if ($facet['Type'] == ShopSearch::FACET_TYPE_RANGE) {
@@ -242,6 +269,11 @@ class FacetHelper extends Object
 			}
 		}
 
+		// if we're auto-building the facets based on attributes,
+		if ($autoFacetAttributes) {
+			$facets = array_merge($this->buildAllAttributeFacets($matches), $facets);
+		}
+
 		// convert values to arraylist
 		$out = new ArrayList();
 		$sortValues = self::config()->sort_facet_values;
@@ -252,6 +284,98 @@ class FacetHelper extends Object
 		}
 
 		return $out;
+	}
+
+
+	/**
+	 * NOTE: this will break if applied to something that's not a SiteTree subclass.
+	 * @param DataList|PaginatedList $matches
+	 * @param array $facet
+	 * @param int $typeID
+	 */
+	protected function buildAttributeFacet($matches, array &$facet, $typeID) {
+		$q = $matches instanceof PaginatedList ? $matches->getList()->dataQuery()->query() : $matches->dataQuery()->query();
+
+		if (empty($facet['Label'])) {
+			$type = ProductAttributeType::get()->byID($typeID);
+			$facet['Label'] = $type->Label;
+		}
+
+		$baseTable = $q->getFrom();
+		if (is_array($baseTable)) $baseTable = reset($baseTable);
+
+		$q = $q->setSelect(array())
+			->selectField('ProductAttributeValue.ID', 'Value')
+			->selectField('ProductAttributeValue.Value', 'Label')
+			->selectField('count(distinct '.$baseTable.'.ID)', 'Count')
+			->addInnerJoin('Product_StaticAttributeValues', $baseTable.'.ID = Product_StaticAttributeValues.ProductID')
+			->addInnerJoin('ProductAttributeValue', 'Product_StaticAttributeValues.ProductAttributeValueID = ProductAttributeValue.ID')
+			->addWhere(sprintf("ProductAttributeValue.TypeID = '%d'", $typeID))
+			->setOrderBy('ProductAttributeValue.Sort', 'ASC')
+			->setGroupBy('ProductAttributeValue.ID')
+			->execute()
+		;
+
+		$facet['Values'] = array();
+		foreach ($q as $row) {
+			$facet['Values'][ $row['Value'] ] = new ArrayData($row);
+		}
+	}
+
+
+	/**
+	 * Builds facets from all attributes present in the data set.
+	 * @param DataList|PaginatedList $matches
+	 * @return array
+	 */
+	protected function buildAllAttributeFacets($matches) {
+		$q = $matches instanceof PaginatedList ? $matches->getList()->dataQuery()->query() : $matches->dataQuery()->query();
+
+		// this is the easiest way to get SiteTree vs SiteTree_Live
+		$baseTable = $q->getFrom();
+		if (is_array($baseTable)) $baseTable = reset($baseTable);
+
+		$q = $q->setSelect(array())
+			->selectField('ProductAttributeType.ID', 'TypeID')
+			->selectField('ProductAttributeType.Label', 'TypeLabel')
+			->selectField('ProductAttributeValue.ID', 'Value')
+			->selectField('ProductAttributeValue.Value', 'Label')
+			->selectField('count(distinct '.$baseTable.'.ID)', 'Count')
+			->addInnerJoin('Product_StaticAttributeTypes', $baseTable.'.ID = Product_StaticAttributeTypes.ProductID')
+			->addInnerJoin('ProductAttributeType', 'Product_StaticAttributeTypes.ProductAttributeTypeID = ProductAttributeType.ID')
+			->addInnerJoin('Product_StaticAttributeValues', $baseTable.'.ID = Product_StaticAttributeValues.ProductID')
+			->addInnerJoin('ProductAttributeValue', 'Product_StaticAttributeValues.ProductAttributeValueID = ProductAttributeValue.ID')
+			->setOrderBy(array(
+				'ProductAttributeType.Label' => 'ASC',
+				'ProductAttributeValue.Sort' => 'ASC',
+			))
+			->setGroupBy('ProductAttributeValue.ID')
+			->execute()
+		;
+
+
+		$curType  = 0;
+		$facets   = array();
+		$curFacet = null;
+		foreach ($q as $row) {
+			if ($curType != $row['TypeID']) {
+				if ($curType > 0) $facets['ATT'.$curType] = $curFacet;
+				$curType = $row['TypeID'];
+				$curFacet = array(
+					'Label'  => $row['TypeLabel'],
+					'Source' => 'ATT'.$curType,
+					'Type'   => ShopSearch::FACET_TYPE_LINK,
+					'Values' => array(),
+				);
+			}
+
+			unset($row['TypeID']);
+			unset($row['TypeLabel']);
+			$curFacet['Values'][ $row['Value'] ] = new ArrayData($row);
+		}
+
+		if ($curType > 0) $facets['ATT'.$curType] = $curFacet;
+		return $facets;
 	}
 
 

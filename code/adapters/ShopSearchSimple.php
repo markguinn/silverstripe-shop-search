@@ -48,7 +48,7 @@ class ShopSearchSimple extends Object implements ShopSearchAdapter
 
 		return new ArrayData(array(
 			'Matches'   => $matches,
-			'Facets'    => FacetHelper::inst()->buildFacets($matches, $facetSpec),
+			'Facets'    => FacetHelper::inst()->buildFacets($matches, $facetSpec, (bool)Config::inst()->get('ShopSearch', 'auto_facet_attributes')),
 		));
 	}
 

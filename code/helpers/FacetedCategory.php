@@ -29,6 +29,9 @@ class FacetedCategory extends SiteTreeExtension
 	/** @var string - which method should we use to get the child products for FilteredProducts */
 	private static $products_method = 'ProductsShowable';
 
+	/** @var bool - automatically create facets for static attributes */
+	private static $auto_facet_attributes = false;
+
 
 	/**
 	 * @param FieldList $fields
@@ -118,7 +121,7 @@ class FacetedCategory extends SiteTreeExtension
 		$baseParams = array_merge($request->requestVars(), array());
 		unset($baseParams['url']);
 
-		$facets     = FacetHelper::inst()->buildFacets($this->FilteredProducts(), $spec);
+		$facets     = FacetHelper::inst()->buildFacets($this->FilteredProducts(), $spec, self::config()->auto_facet_attributes);
 		$facets     = FacetHelper::inst()->transformHierarchies($facets);
 		$facets     = FacetHelper::inst()->updateFacetState($facets, $filters);
 		$facets     = FacetHelper::inst()->insertFacetLinks($facets, $baseParams, $baseLink);

@@ -19,12 +19,16 @@ class ShopSearchTest extends SapphireTest
 		Config::inst()->update('ShopSearch', 'adapter_class', 'ShopSearchSimple');
 		Config::inst()->remove('Product', 'searchable_fields');
 		Config::inst()->update('Product', 'searchable_fields', array('Title', 'Content'));
+		Config::inst()->remove('Product', 'default_attributes');
 		Config::inst()->remove('ShopSearch', 'facets');
+		Config::inst()->update('FacetHelper', 'sort_facet_values', true);
+		Config::inst()->update('FacetHelper', 'faster_faceting', false);
 
 		$p = singleton('Product');
 		if (!$p->hasExtension('VirtualFieldIndex')) {
 			Product::add_extension('VirtualFieldIndex');
 		}
+
 		Config::inst()->remove('VirtualFieldIndex', 'vfi_spec');
 		Config::inst()->update('VirtualFieldIndex', 'vfi_spec', array(
 			'Product' => array(
@@ -33,6 +37,8 @@ class ShopSearchTest extends SapphireTest
 				'Category'  => array('Parent', 'ProductCategories'),
 			),
 		));
+
+		if (!$p->hasExtension('HasStaticAttributes')) Product::add_extension('HasStaticAttributes');
 
 		parent::setUpOnce();
 	}
@@ -402,4 +408,55 @@ class ShopSearchTest extends SapphireTest
 		$this->assertEquals(2, $facets->count(),        'Should be 2 facets');
 	}
 
+
+	function testStaticAttributes() {
+		VirtualFieldIndex::build('Product');
+		foreach (Product::get() as $p) $p->publish('Stage','Live');
+		$c = $this->objFromFixture('ProductCategory', 'c3');
+		$c->publish('Stage','Live');
+
+		// set up some attributes
+		$p1     = $this->objFromFixture('Product', 'p1');
+		$p2     = $this->objFromFixture('Product', 'p2');
+		$pat1   = $this->objFromFixture('ProductAttributeType', 'pat1');
+		$pat1v1 = $this->objFromFixture('ProductAttributeValue', 'pat1v1');
+		$pat1v2 = $this->objFromFixture('ProductAttributeValue', 'pat1v2');
+		$p1->StaticAttributeTypes()->add($pat1);
+		$p1->StaticAttributeValues()->add($pat1v1);
+		$p1->StaticAttributeValues()->add($pat1v2);
+		$p2->StaticAttributeTypes()->add($pat1);
+		$p2->StaticAttributeValues()->add($pat1v1);
+
+		// Should be able to filter by an attribute
+		$attkey = 'ATT' . $pat1->ID;
+		$prods  = FacetHelper::inst()->addFiltersToDataList($c->ProductsShowable(), array($attkey => $pat1v1->ID));
+		$this->assertEquals(2, $prods->count(), 'Should be 2 products for v1');
+		$prods  = FacetHelper::inst()->addFiltersToDataList($c->ProductsShowable(), array($attkey => $pat1v2->ID));
+		$this->assertEquals(1, $prods->count(), 'Should be 1 product for v2');
+
+		// Should be able to facet by ATT1 explicitly
+		$facets = FacetHelper::inst()->buildFacets($c->ProductsShowable(), array(
+			$attkey => array(
+				'Label' => 'By Color',
+				'Type'  => ShopSearch::FACET_TYPE_LINK,
+			),
+		));
+		$this->assertEquals(1, $facets->count(),        'Should be 1 facet');
+		$f1 = $facets->First();
+		$this->assertEquals(2, $f1->Values->count(),    'Should be 2 values');
+		$this->assertEquals('Red', $f1->Values->First()->Label);
+		$this->assertEquals(2, $f1->Values->First()->Count);
+		$this->assertEquals('Green', $f1->Values->Last()->Label);
+		$this->assertEquals(1, $f1->Values->Last()->Count);
+
+		// Should be able to facet by auto_facet_attributes
+		$facets = FacetHelper::inst()->buildFacets($c->ProductsShowable(), array(), true);
+		$this->assertEquals(1, $facets->count(),        'Should be 1 facet');
+		$f1 = $facets->First();
+		$this->assertEquals(2, $f1->Values->count(),    'Should be 2 values');
+		$this->assertEquals('Red', $f1->Values->First()->Label);
+		$this->assertEquals(2, $f1->Values->First()->Count);
+		$this->assertEquals('Green', $f1->Values->Last()->Label);
+		$this->assertEquals(1, $f1->Values->Last()->Count);
+	}
 }
