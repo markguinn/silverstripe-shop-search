@@ -121,7 +121,8 @@ class FacetedCategory extends SiteTreeExtension
 		$baseParams = array_merge($request->requestVars(), array());
 		unset($baseParams['url']);
 
-		$facets     = FacetHelper::inst()->buildFacets($this->FilteredProducts(), $spec, (bool)Config::inst()->get('FacetedCategory', 'auto_facet_attributes'));
+		$products   = $this->owner->hasMethod('ProductsForFaceting') ? $this->owner->ProductsForFaceting() : $this->FilteredProducts();
+		$facets     = FacetHelper::inst()->buildFacets($products, $spec, (bool)Config::inst()->get('FacetedCategory', 'auto_facet_attributes'));
 		$facets     = FacetHelper::inst()->transformHierarchies($facets);
 		$facets     = FacetHelper::inst()->updateFacetState($facets, $filters);
 		$facets     = FacetHelper::inst()->insertFacetLinks($facets, $baseParams, $baseLink);
