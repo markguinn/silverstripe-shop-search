@@ -12,7 +12,7 @@ class BuildVFI extends BuildTask
 	protected $title = 'Rebuild Virtual Field Indexes';
 	protected $description = 'Rebuild all VFI fields on all tables and records.';
 
-	static $recordsPerRequest = 5000;
+	static $recordsPerRequest = 200;
 
 	function old_run($request) {
 		$classes = VirtualFieldIndex::get_classes_with_vfi();
