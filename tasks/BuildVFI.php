@@ -57,7 +57,7 @@ class BuildVFI extends BuildTask
 		$verbose = isset($_GET['verbose']);
 
 		if (isset($_GET['start'])) {
-			$this->runFrom($_GET['class'], $_GET['start']);
+			$this->runFrom($_GET['class'], $_GET['start'], $_GET['field']);
 		}
 		else {
 			foreach(array('framework','sapphire') as $dirname) {
@@ -77,12 +77,13 @@ class BuildVFI extends BuildTask
 				$singleton->extend('augmentSQL',$sqlQuery,$dtaQuery);
 				$total = $query->count();
 				$startFrom = isset($_GET['startfrom']) ? $_GET['startfrom'] : 0;
+				$field = isset($_GET['field']) ? $_GET['field'] : '';
 
 				echo "Class: $class, total: $total\n\n";
 
 				for ($offset = $startFrom; $offset < $total; $offset += $this->stat('recordsPerRequest')) {
 					echo "$offset..";
-					$cmd = "php $script dev/tasks/$self class=$class start=$offset";
+					$cmd = "php $script dev/tasks/$self class=$class start=$offset field=$field";
 					if($verbose) echo "\n  Running '$cmd'\n";
 					$res = $verbose ? passthru($cmd) : `$cmd`;
 					if($verbose) echo "  ".preg_replace('/\r\n|\n/', '$0  ', $res)."\n";
@@ -91,10 +92,10 @@ class BuildVFI extends BuildTask
 		}
 	}
 
-	protected function runFrom($class, $start) {
+	protected function runFrom($class, $start, $field) {
 		$items = DataList::create($class)->limit($this->stat('recordsPerRequest'), $start);
 		foreach ($items as $item) {
-			$item->rebuildVFI();
+			$item->rebuildVFI($field);
 		}
 	}
 

@@ -49,6 +49,9 @@ class VirtualFieldIndex extends DataExtension
 	/** @var array - central config for all models */
 	private static $vfi_spec = array();
 
+	/** @var bool - if you set this to true it will write to both live and stage using DB::query and save some time, possibly */
+	private static $fast_writes_enabled = false;
+
 	/** @var bool - used to prevent an infinite loop in onBeforeWrite */
 	protected $isRebuilding = false;
 
@@ -173,8 +176,28 @@ class VirtualFieldIndex extends DataExtension
 				if (is_object($val)) $val = (string)$val->first();  // if a SS_List, take the first as well
 			}
 
-			$this->owner->setField($fn, $val);
-			$this->owner->write();
+			if (Config::inst()->get('VirtualFieldIndex', 'fast_writes_enabled')) {
+				// NOTE: this is usually going to be bad practice, but if you
+				// have a lot of products and a lot of on...Write handlers that
+				// can get tedious really quick. This is just here as an option.
+				$table = '';
+				foreach ($this->owner->getClassAncestry() as $ancestor) {
+					if (DataObject::has_own_table($ancestor)) {
+						$sing = singleton($ancestor);
+						if ($sing->hasOwnTableDatabaseField($fn)) {
+							$table = $ancestor;
+							break;
+						}
+					}
+				}
+
+				DB::query($sql = sprintf("UPDATE %s SET %s = '%s' WHERE ID = '%d'", $table, $fn, Convert::raw2sql($val), $this->owner->ID));
+				DB::query(sprintf("UPDATE %s_Live SET %s = '%s' WHERE ID = '%d'", $table, $fn, Convert::raw2sql($val), $this->owner->ID));
+				$this->owner->setField($fn, $val);
+			} else {
+				$this->owner->setField($fn, $val);
+				$this->owner->write();
+			}
 			$this->isRebuilding = false;
 		} else {
 			// rebuild all fields if they didn't specify
