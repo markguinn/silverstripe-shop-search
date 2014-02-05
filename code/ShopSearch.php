@@ -39,6 +39,9 @@ class ShopSearch extends Object
 	/** @var bool - automatically create facets for static attributes */
 	private static $auto_facet_attributes = false;
 
+	/** @var string - optionally, a different template to run ajax results through (sans-Page.ss) */
+	private static $ajax_results_template = '';
+
 	/** @var string - these allow you to use different querystring params in you need to */
 	private static $qs_query         = 'q';
 	private static $qs_filters       = 'f';
