@@ -1,12 +1,12 @@
 <h4>$Label</h4>
 <% if $NestedValues %>
-	<ul data-hierarchy="true">
+	<ul data-root data-hierarchy="true" data-link-details="$ATT_val('LinkDetails')">
 		<% loop $NestedValues %>
 			<% include FacetTypeCheckboxInner %>
 		<% end_loop %>
 	</ul>
 <% else %>
-	<ul>
+	<ul data-root>
 		<% loop $Values %>
 			<% include FacetTypeCheckboxInner %>
 		<% end_loop %>

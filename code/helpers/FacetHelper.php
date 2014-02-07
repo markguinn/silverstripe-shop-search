@@ -393,46 +393,42 @@ class FacetHelper extends Object
 		$qs_t   = Config::inst()->get('ShopSearch', 'qs_title');
 
 		foreach ($facets as $facet) {
-			if ($facet->Type == ShopSearch::FACET_TYPE_RANGE) {
-				$params = array_merge($baseParams, array());
-				if (!isset($params[$qs_f])) $params[$qs_f] = array();
-				$params[$qs_f][$facet->Source] = 'RANGEFACETVALUE';
-				$params[$qs_t] = $facet->Label . ': RANGEFACETLABEL';
-				$facet->Link = $baseLink . '?' . http_build_query($params);
-			} else {
-				foreach ($facet->Values as $value) {
-					// make a copy of the existing params
+			switch ($facet->Type) {
+				case ShopSearch::FACET_TYPE_RANGE:
 					$params = array_merge($baseParams, array());
-
-					// add the filter for this value
 					if (!isset($params[$qs_f])) $params[$qs_f] = array();
-					if ($facet->Type == ShopSearch::FACET_TYPE_CHECKBOX) {
-						$f = array();
+					$params[$qs_f][$facet->Source] = 'RANGEFACETVALUE';
+					$params[$qs_t] = $facet->Label . ': RANGEFACETLABEL';
+					$facet->Link = $baseLink . '?' . http_build_query($params);
+				break;
 
-						// Fill the proposed filter state with the current state,
-						// then add/substract this item and it's kids
-						$meAndMyKids = array($value->Value => $value->Value);
-						if (!empty($value->Children)) $meAndMyKids += $this->getRecursiveChildValues($value->Children);
+				case ShopSearch::FACET_TYPE_CHECKBOX;
+					$facet->LinkDetails = json_encode(array(
+						'filter'    => $qs_f,
+						'source'    => $facet->Source,
+						'leaves'    => $facet->FilterOnlyLeaves,
+					));
 
-						$clickState = !$value->Active;
-						foreach ($facet->Values as $val2) {
-							// In this mode, we only actually send a filter for the lowest level items
-							if (!empty($facet->FilterOnlyLeaves) && !empty($val2->Children)) continue;
+					// fall through on purpose
 
-							$active = (isset($meAndMyKids[$val2->Value])) ? $clickState : $val2->Active;
-							if ($active) $f[] = $val2->Value;
+				default:
+					foreach ($facet->Values as $value) {
+						// make a copy of the existing params
+						$params = array_merge($baseParams, array());
+
+						// add the filter for this value
+						if (!isset($params[$qs_f])) $params[$qs_f] = array();
+						if ($facet->Type == ShopSearch::FACET_TYPE_CHECKBOX) {
+							unset($params[$qs_f][$facet->Source]); // this will be figured out via javascript
+							$params[$qs_t] = ($value->Active ? 'Remove ' : '') . $facet->Label . ': ' . $value->Label;
+						} else {
+							$params[$qs_f][$facet->Source] = $value->Value;
+							$params[$qs_t] = $facet->Label . ': ' . $value->Label;
 						}
 
-						$params[$qs_f][$facet->Source] = $f;
-						$params[$qs_t] = ($value->Active ? 'Remove ' : '') . $facet->Label . ': ' . $value->Label;
-					} else {
-						$params[$qs_f][$facet->Source] = $value->Value;
-						$params[$qs_t] = $facet->Label . ': ' . $value->Label;
+						// build a new link
+						$value->Link = $baseLink . '?' . http_build_query($params);
 					}
-
-					// build a new link
-					$value->Link = $baseLink . '?' . http_build_query($params);
-				}
 			}
 		}
 

@@ -32,12 +32,11 @@
 			// that works consistently.
 			$('.facet-checkbox label, .facet-checkbox input[type=checkbox]').click(function(e){
 				if (e.target.nodeName != 'INPUT') return;
-				var $this = $(this),
+				var $this  = $(this),
+					$root  = $this.closest('ul[data-root]'),
 					$label = $this.closest('label');
 
 				// If this is a hierarchical dataset, go ahead and check/uncheck the parents and children
-				// This has no impact in our current implementation, but it's better for user experience
-				// especially if the page takes a while to load.
 				if ($this.closest('ul').data('hierarchy')) {
 					var myState = e.target.checked;
 
@@ -50,8 +49,17 @@
 					}
 				}
 
+				// construct the new url
+				var url  = $label.data('url'),
+					info = $root.data('link-details'),
+					sel  = info.leaves ? 'label:not([data-children]) > input[type=checkbox]' : 'input[type=checkbox]',
+					key  = '&' + encodeURIComponent(info.filter + '[' + info.source + '][]') + '=';
+
+				$root.find(sel).each(function(index, el){
+					if (el.checked) url += key + el.value;
+				});
+
 				// go to the new url
-				var url = $label.data('url');
 				$(document.body).trigger('searchstate', url);
 			});
 		}

@@ -1,5 +1,5 @@
 <li>
-	<label data-url="$Link" data-value="$Value"<% if $ParentValue %> data-parent="$ParentValue"<% end_if %>>
+	<label data-url="$Link" data-value="$Value"<% if $ParentValue %> data-parent="$ParentValue"<% end_if %><% if $Children %> data-children="$Children.Count"<% end_if %>>
 		<input type="checkbox" value="$Value" <% if $Active %>checked<% end_if %>> $Label <% if $Count %><span class="count">($Count)</span><% end_if %>
 	</label>
 	<% if $Children %>
