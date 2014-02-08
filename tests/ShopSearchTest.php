@@ -249,7 +249,7 @@ class ShopSearchTest extends SapphireTest
 		$url = parse_url($category->Values->first()->Link);
 		parse_str($url['query'], $qs);
 		$this->assertNotEmpty($qs['f'],                     'Link should be all the other categories checked');
-		$this->assertEmpty($qs['f']['Category'],            'category bit should be empty so javascript can fill it in');
+		$this->assertFalse(isset($qs['f']['Category']),     'category bit should be empty so javascript can fill it in');
 //		$this->assertNotEmpty($qs['f']['Category'],         'Link should be all the other categories checked (2)');
 //		$this->assertTrue(is_array($qs['f']['Category']),   'Link should be all the other categories checked (3)');
 //		$this->assertFalse(in_array($this->idFromFixture('ProductCategory', 'c1'), $qs['f']['Category']), 'Link should be all the other categories checked (4)');
