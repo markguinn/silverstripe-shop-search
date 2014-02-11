@@ -76,7 +76,12 @@ class ShopSearchSimple extends Object implements ShopSearchAdapter
 					} else {
 						$filter = preg_replace('/Filter$/', '', $spec['filter']);
 					}
-					$fields[] = "{$name}:{$filter}";
+
+					if (class_exists($filter . 'Filter')) {
+						$fields[] = "{$name}:{$filter}";
+					} else {
+						$fields[] = $name;
+					}
 				} else {
 					$fields[] = $name;
 				}

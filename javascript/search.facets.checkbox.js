@@ -53,14 +53,15 @@
 				var url  = $label.data('url'),
 					info = $root.data('link-details'),
 					sel  = info.leaves ? 'label:not([data-children]) > input[type=checkbox]' : 'input[type=checkbox]',
-					key  = '&' + encodeURIComponent(info.filter + '[' + info.source + '][]') + '=';
+					key  = '&' + encodeURIComponent(info.filter + '[' + info.source + ']') + '=LIST~',
+					ids  = [];
 
 				$root.find(sel).each(function(index, el){
-					if (el.checked) url += key + el.value;
+					if (el.checked) ids.push(el.value);
 				});
 
 				// go to the new url
-				$(document.body).trigger('searchstate', url);
+				$(document.body).trigger('searchstate', url + key + ids.join(','));
 			});
 		}
 	};

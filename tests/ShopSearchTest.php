@@ -248,9 +248,8 @@ class ShopSearchTest extends SapphireTest
 		$this->assertTrue($category->Values->offsetGet(2)->Active,   'They should all be checked (4)');
 		$url = parse_url($category->Values->first()->Link);
 		parse_str($url['query'], $qs);
-		$this->assertNotEmpty($qs['f'],                     'Link should be all the other categories checked');
-		$this->assertFalse(isset($qs['f']['Category']),     'category bit should be empty so javascript can fill it in');
-//		$this->assertNotEmpty($qs['f']['Category'],         'Link should be all the other categories checked (2)');
+		$this->assertTrue(empty($qs['f']),             'Link should be all the other categories checked (2)');
+		// This is all handled in javascript now.
 //		$this->assertTrue(is_array($qs['f']['Category']),   'Link should be all the other categories checked (3)');
 //		$this->assertFalse(in_array($this->idFromFixture('ProductCategory', 'c1'), $qs['f']['Category']), 'Link should be all the other categories checked (4)');
 //		$this->assertTrue(in_array($this->idFromFixture('ProductCategory', 'c2'), $qs['f']['Category']), 'Link should be all the other categories checked (5)');
@@ -301,6 +300,17 @@ class ShopSearchTest extends SapphireTest
 					$this->idFromFixture('ProductCategory', 'c1'),
 					$this->idFromFixture('ProductCategory', 'c3'),
 				),
+			),
+		));
+		$this->assertEquals(4, $r->TotalMatches,                'Should contain all products');
+
+		// filter on multiple categories with comma separation
+		$r = ShopSearch::inst()->search(array(
+			'f' => array(
+				'Category' => 'LIST~' . implode(',', array(
+					$this->idFromFixture('ProductCategory', 'c1'),
+					$this->idFromFixture('ProductCategory', 'c3'),
+				)),
 			),
 		));
 		$this->assertEquals(4, $r->TotalMatches,                'Should contain all products');

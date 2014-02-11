@@ -72,7 +72,7 @@ class FacetedCategory extends SiteTreeExtension
 		$request    = $this->getController()->getRequest();
 		$filters    = $request->requestVar($qs_f);
 		if (empty($filters) || !is_array($filters)) return array();
-		return $filters;
+		return FacetHelper::inst()->scrubFilters($filters);
 	}
 
 

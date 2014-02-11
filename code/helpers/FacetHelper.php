@@ -32,6 +32,25 @@ class FacetHelper extends Object
 
 
 	/**
+	 * Performs some quick pre-processing on filters from any source
+	 *
+	 * @param array $filters
+	 * @return array
+	 */
+	public function scrubFilters($filters) {
+		if (!is_array($filters)) $filters = array();
+
+		foreach ($filters as $k => $v) {
+			if (empty($v)) unset($filters[$k]);
+			// this allows you to send an array as a comma-separated list, which is easier on the query string length
+			if (is_string($v) && strpos($v, 'LIST~') === 0) $filters[$k] = explode(',', substr($v, 5));
+		}
+
+		return $filters;
+	}
+
+
+	/**
 	 * @param DataList $list
 	 * @param array    $filters
 	 * @param DataObject|string $sing - just a singleton object we can get information off of

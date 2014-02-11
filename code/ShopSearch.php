@@ -182,10 +182,7 @@ class ShopSearch extends Object
 		}
 
 		// figure out and scrub the filters
-		$filters  = !empty($vars[$qs_f]) ? $vars[$qs_f] : array();
-		foreach ($filters as $k => $v) {
-			if (empty($v)) unset($filters[$k]);
-		}
+		$filters  = !empty($vars[$qs_f]) ? FacetHelper::inst()->scrubFilters($vars[$qs_f]) : array();
 
 		// do the search
 		$keywords = !empty($vars[$qs_q]) ? $vars[$qs_q] : '';

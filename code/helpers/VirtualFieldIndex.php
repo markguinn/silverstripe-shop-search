@@ -191,9 +191,15 @@ class VirtualFieldIndex extends DataExtension
 					}
 				}
 
-				DB::query($sql = sprintf("UPDATE %s SET %s = '%s' WHERE ID = '%d'", $table, $fn, Convert::raw2sql($val), $this->owner->ID));
-				DB::query(sprintf("UPDATE %s_Live SET %s = '%s' WHERE ID = '%d'", $table, $fn, Convert::raw2sql($val), $this->owner->ID));
-				$this->owner->setField($fn, $val);
+				if (!empty($table)) {
+					DB::query($sql = sprintf("UPDATE %s SET %s = '%s' WHERE ID = '%d'", $table, $fn, Convert::raw2sql($val), $this->owner->ID));
+					DB::query(sprintf("UPDATE %s_Live SET %s = '%s' WHERE ID = '%d'", $table, $fn, Convert::raw2sql($val), $this->owner->ID));
+					$this->owner->setField($fn, $val);
+				} else {
+					// if we couldn't figure out the right table, fall back to the old fashioned way
+					$this->owner->setField($fn, $val);
+					$this->owner->write();
+				}
 			} else {
 				$this->owner->setField($fn, $val);
 				$this->owner->write();
