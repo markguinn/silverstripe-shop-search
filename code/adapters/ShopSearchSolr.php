@@ -402,10 +402,10 @@ XML;
 			$fq[] = ($missing ? "+{$field}:[* TO *] " : '') . '-('.implode(' ', $excludeq).')';
 		}
 
-		if(!headers_sent()) {
-			if ($q) header('X-Query: '.implode(' ', $q));
-			if ($fq) header('X-Filters: "'.implode('", "', $fq).'"');
-		}
+//		if(!headers_sent()) {
+//			if ($q) header('X-Query: '.implode(' ', $q));
+//			if ($fq) header('X-Filters: "'.implode('", "', $fq).'"');
+//		}
 
 		$params = array_merge($params, array('fq' => implode(' ', $fq)));
 
@@ -583,10 +583,10 @@ XML;
 			$fq[] = ($missing ? "+{$field}:[* TO *] " : '') . '-('.implode(' ', $excludeq).')';
 		}
 
-		if(!headers_sent()) {
-			if ($q) header('X-Query: '.implode(' ', $q));
-			if ($fq) header('X-Filters: "'.implode('", "', $fq).'"');
-		}
+//		if(!headers_sent()) {
+//			if ($q) header('X-Query: '.implode(' ', $q));
+//			if ($fq) header('X-Filters: "'.implode('", "', $fq).'"');
+//		}
 
 		if ($offset == -1) $offset = $query->start;
 		if ($limit == -1) $limit = $query->limit;
