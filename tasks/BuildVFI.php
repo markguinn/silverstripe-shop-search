@@ -56,6 +56,22 @@ class BuildVFI extends BuildTask
 		$self = get_class($this);
 		$verbose = isset($_GET['verbose']);
 
+		if (isset($_GET['class']) && isset($_GET['id'])) {
+			$item = DataObject::get($_GET['class'])->byID($_GET['id']);
+			if (!$item || !$item->exists()) die('not found: ' . $_GET['id']);
+			$item->rebuildVFI();
+			echo "done";
+			return;
+		}
+
+		if (isset($_GET['link'])) {
+			$item = SiteTree::get_by_link($_GET['link']);
+			if (!$item || !$item->exists()) die('not found: ' . $_GET['link']);
+			$item->rebuildVFI();
+			echo "done";
+			return;
+		}
+
 		if (isset($_GET['start'])) {
 			$this->runFrom($_GET['class'], $_GET['start'], $_GET['field']);
 		}
