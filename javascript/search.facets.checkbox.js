@@ -30,7 +30,8 @@
 			// Facet checkboxes - this seems wonky to have to have a handler on both the label
 			// and the checkbox but discard the label event but that's the only way i've found
 			// that works consistently.
-			$('.facet-checkbox label, .facet-checkbox input[type=checkbox]').click(function(e){
+			//$('.facet-checkbox label, .facet-checkbox input[type=checkbox]').click(function(e){
+			$('.facet-checkbox label').on('click', function(e){
 				if (e.target.nodeName != 'INPUT') return;
 				var $this  = $(this),
 					$root  = $this.closest('ul[data-root]'),
