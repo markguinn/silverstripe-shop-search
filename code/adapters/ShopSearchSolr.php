@@ -158,9 +158,10 @@ class ShopSearchSolr extends SolrIndex implements ShopSearchAdapter
 //		$xml .= "\n\t\t<field name='_spellcheckContent' type='htmltext' indexed='true' stored='false' multiValued='true' />";
 
 		// create a sorting column
-		if (isset($this->fieldMap['Title'])) {
-			$xml .= "\n\t\t" . '<field name="_titleSort" type="alphaOnlySort" indexed="true" stored="false" required="false" multiValued="false" />';
-			$xml .= "\n\t\t" . '<copyField source="SiteTree_Title" dest="_titleSort"/>';
+		if (isset($this->fieldMap['Title']) || ShopSearch::config()->solr_title_sort_field) {
+			$f = empty(ShopSearch::config()->title_sort_field) ? '_titleSort' : ShopSearch::config()->solr_title_sort_field;
+			$xml .= "\n\t\t" . '<field name="' . $f . '" type="alphaOnlySort" indexed="true" stored="false" required="false" multiValued="false" />';
+			$xml .= "\n\t\t" . '<copyField source="SiteTree_Title" dest="' . $f . '"/>';
 		}
 
 		// create an autocomplete column

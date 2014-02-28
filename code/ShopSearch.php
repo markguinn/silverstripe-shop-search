@@ -72,6 +72,9 @@ class ShopSearch extends Object
 	/** @var array - field definition for Solr only */
 	private static $solr_filter_fields = array();
 
+	/** @var string - if present, will create a copy of SiteTree_Title that's suited for alpha sorting */
+	private static $solr_title_sort_field = '';
+
 
 	/**
 	 * @return array
