@@ -32,7 +32,7 @@ INSTALLATION:
 -------------
 1. Install via composer
 2. Make adjustments to configuration via yml. May want to change adapter
-   class, searchable classes, and facets.
+   class, searchable classes, and facets. **See shop_search/docs/en/Adapters.md**.
 3. If using VirtualFieldIndex class for faceting with mysql, enable a
    cron job for `dev/tasks/BuildVFI`.
 

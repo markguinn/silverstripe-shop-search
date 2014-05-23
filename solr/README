@@ -1,0 +1,6 @@
+The files in this folder are examples of how you might configure solr.
+They are largely copied verbatim from fulltextsearch-localsolr with
+some changes added for search suggestions and search-as-you-type.
+
+If you want to customise them just copy them to another folder or
+ditch them entirely and change your extrasPath under Solr::configure_server.

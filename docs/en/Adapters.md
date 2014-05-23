@@ -55,13 +55,30 @@ NOTE: Paging is not yet implemented
 
 ShopSearchSolr
 --------------
-Follow the instructions on the fulltextsearch module to get solr running.
 This adapter is the quickest and most feature-complete. Fulltext and filter
 fields are set using yml configuration options on the ShopSearch class.
-This is because there is additional config that may need to happen. An
-example would be the following:
+This is because there is additional config that may need to happen.
+
+First, add something like the following to _config.php:
 
 ```
+// Configure Solr
+Solr::configure_server(array(
+	'host' => 'localhost',
+	'extraspath' => Director::baseFolder() . '/shop_search/solr/',
+	'indexstore' => array(
+		'mode' => 'file',
+		'path' => BASE_PATH . '/.solr'
+	)
+));
+```
+
+An example `mysite/_config/search.yml` would be the following:
+
+```
+---
+Name: appsearch
+---
 ShopSearch:
   adapter_class: ShopSearchSolr
   buyables_are_searchable: 0

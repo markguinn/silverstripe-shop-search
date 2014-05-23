@@ -11,6 +11,7 @@
 	if (typeof window.ShopSearch == 'undefined') window.ShopSearch = {};
 
 	/**
+	 * TODO: internationalize this
 	 * @param priceIn
 	 * @returns string
 	 */
@@ -149,8 +150,10 @@
 						$('<span>').addClass('title').html(item.title).appendTo(a);
 
 						if (item.desc) $('<span>').addClass('desc').html(item.desc).appendTo(a);
-						var price = $('<span>').addClass('price').html(item.price).appendTo(a);
-						if (item.original_price) price.prepend('<del>'+item.original_price+'</del> ');
+						if (item.price && item.price != '$0.00') {
+							var price = $('<span>').addClass('price').html(item.price).appendTo(a);
+							if (item.original_price) price.prepend('<del>'+item.original_price+'</del> ');
+						}
 
 						a.appendTo(li);
 					} else {
