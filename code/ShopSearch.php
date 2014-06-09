@@ -12,6 +12,10 @@ class ShopSearch extends Object
 	const FACET_TYPE_CHECKBOX   = 'checkbox';
 	const FACET_TYPE_RANGE      = 'range';
 
+	const MODE_THUMB = 'grid';
+	const MODE_LIST  = 'list';
+
+
 	/** @var string - class name of adapter class to use */
 	private static $adapter_class = 'ShopSearchSimple';
 
@@ -49,6 +53,7 @@ class ShopSearch extends Object
 	private static $qs_title         = '__t';
 	private static $qs_source        = '__src'; // used to log searches from search-as-you-type
 	private static $qs_sort          = 'sort';
+	private static $qs_mode          = 'mode';
 
 	/** @var array - I'm leaving this particularly bare b/c with config merging it's a pain to remove items */
 	private static $sort_options = array(
@@ -56,6 +61,9 @@ class ShopSearch extends Object
 //		'SiteTree_Title asc'    => 'Alphabetical (A-Z)',
 //		'SiteTree_Title dsc'    => 'Alphabetical (Z-A)',
 	);
+
+	/** @var string - Default search mode */
+	private static $default_mode = self::MODE_LIST;
 
 	/**
 	 * @var array - default search facets (price, category, etc)

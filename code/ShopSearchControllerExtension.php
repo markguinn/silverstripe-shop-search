@@ -26,6 +26,7 @@ class ShopSearchControllerExtension extends Extension
 		// do the search
 		$results  = ShopSearch::inst()->search($data);
 		$baseLink = $this->owner->getRequest()->getURL(false);
+		unset($data['url']);
 
 		// add links for any facets
 		if ($results->Facets && $results->Facets->count()) {
@@ -42,6 +43,15 @@ class ShopSearchControllerExtension extends Extension
 		unset($sortParams['url']);
 		$results->SortControl = DropdownField::create($qs_sort, ShopSearch::config()->sort_label, $options, $results->Sort)
 			->setAttribute('data-url', $baseLink . '?' . http_build_query($sortParams));
+
+		// add options for thumb/list mode
+		$qs_mode = (string) Config::inst()->get('ShopSearch', 'qs_mode');
+		$mode = empty($data[$qs_mode]) ? Config::inst()->get('ShopSearch', 'default_mode') : $data[$qs_mode];
+		$results->SearchMode    = $mode;
+		$results->IsListMode    = ($mode == ShopSearch::MODE_LIST);
+		$results->IsThumbMode   = $mode == ShopSearch::MODE_THUMB;
+		$results->ListModeLink  = $baseLink . '?' . http_build_query(array_merge($data, array($qs_mode => ShopSearch::MODE_LIST)));
+		$results->ThumbModeLink = $baseLink . '?' . http_build_query(array_merge($data, array($qs_mode => ShopSearch::MODE_THUMB)));
 
 		// a little more output management
 		$results->Title = "Search Results";
