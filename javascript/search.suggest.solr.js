@@ -24,9 +24,86 @@
 		Config:{
 			solrURL:            document.location.protocol + "//" + document.location.host + ':8983/solr/ShopSearchSolr/select',
 			filterShowInSearch: true,
-			categoryFilter:     'Product_AllCategoryIDsRecursive'
+			categoryFilter:     'Product_AllCategoryIDsRecursive',
 		},
 
+		/**
+		 * Maps a search result from solr to an easy-to-consume format for the renderer
+		 * @param prodIn {Object}
+		 * @return {Object}
+ 		 */
+		productMappingFunction:function(prodIn){
+			var prod = {
+				category:   'Products',
+				link:       prodIn.Product_Link,
+				title:      prodIn.SiteTree_Title,
+				thumb:      prodIn.Product_ThumbURL,
+				price:      formatCurrency(prodIn.Product_VFI_Price),
+			};
+
+			if (prodIn.Product_VFI_Price != prodIn.Product_BasePrice) {
+				prod.original_price = formatCurrency(prodIn.Product_BasePrice);
+			}
+
+			return prod;
+		},
+
+		/**
+		 * Renders a list item from data
+		 * @param ul {jQuery} - parent
+		 * @param item {Object} - data
+		 * @return {jQuery} - li node
+		 */
+		renderMenuItem:function(ul, item) {
+			var li = $('<li>');
+
+			if (item.title) {
+				var a = $('<a>').addClass('product').attr('href', item.link);
+
+				if (item.thumb) {
+					$('<img>').attr('src', item.thumb).appendTo(a);
+					a.addClass('thumb');
+				}
+
+				$('<span>').addClass('title').html(item.title).appendTo(a);
+
+				if (item.desc) $('<span>').addClass('desc').html(item.desc).appendTo(a);
+				if (item.price && item.price != '$0.00') {
+					var price = $('<span>').addClass('price').html(item.price).appendTo(a);
+					if (item.original_price) price.prepend('<del>'+item.original_price+'</del> ');
+				}
+
+				a.appendTo(li);
+			} else {
+				$('<a>').html(item.label).appendTo(li);
+			}
+
+			return li.appendTo(ul);
+		},
+
+
+		/**
+		 * @param ul
+		 * @param items
+		 */
+		renderMenu:function( ul, items ) {
+			var self = this,
+				currentCategory = "";
+
+			ul.addClass('shop-search');
+			$.each( items, function( index, item ) {
+				if ( item.category != currentCategory ) {
+					ul.append( "<li class='ui-autocomplete-category'>" + item.category + "</li>" );
+					currentCategory = item.category;
+				}
+				self._renderItemData( ul, item );
+			});
+		},
+
+
+		/**
+		 * Initializes the search field
+		 */
 		init:function(){
 			var searchField = $('#ShopSearchForm_SearchForm_q'),
 				suggestURL  = ShopSearch.Suggest.Config.solrURL
@@ -99,19 +176,7 @@
 
 								if (products.length > 0) {
 									for (var i = 0; i < products.length; i++) {
-										var prod = {
-											category:   'Products',
-											link:       products[i].Product_Link,
-											title:      products[i].SiteTree_Title,
-											thumb:      products[i].Product_ThumbURL,
-											price:      formatCurrency(products[i].Product_VFI_Price),
-										};
-
-										if (products[i].Product_VFI_Price != products[i].Product_BasePrice) {
-											prod.original_price = formatCurrency(products[i].Product_BasePrice);
-										}
-
-										out.push(prod);
+										out.push(ShopSearch.Suggest.productMappingFunction(products[i]));
 									}
 								}
 
@@ -122,46 +187,11 @@
 					}
 				});
 
-				searchField.data( "ui-autocomplete" )._renderMenu = function( ul, items ) {
-					var self = this,
-						currentCategory = "";
-
-					ul.addClass('shop-search');
-					$.each( items, function( index, item ) {
-						if ( item.category != currentCategory ) {
-							ul.append( "<li class='ui-autocomplete-category'>" + item.category + "</li>" );
-							currentCategory = item.category;
-						}
-						self._renderItemData( ul, item );
-					});
-				};
-
-				searchField.data( "ui-autocomplete" )._renderItem = function(ul, item) {
-					var li = $('<li>');
-
-					if (item.title) {
-						var a = $('<a>').addClass('product').attr('href', item.link);
-
-						if (item.thumb) {
-							$('<img>').attr('src', item.thumb).appendTo(a);
-							a.addClass('thumb');
-						}
-
-						$('<span>').addClass('title').html(item.title).appendTo(a);
-
-						if (item.desc) $('<span>').addClass('desc').html(item.desc).appendTo(a);
-						if (item.price && item.price != '$0.00') {
-							var price = $('<span>').addClass('price').html(item.price).appendTo(a);
-							if (item.original_price) price.prepend('<del>'+item.original_price+'</del> ');
-						}
-
-						a.appendTo(li);
-					} else {
-						$('<a>').html(item.label).appendTo(li);
-					}
-
-					return li.appendTo(ul);
-				};
+				// customize rendering
+				searchField.data( "ui-autocomplete" )._renderMenu = ShopSearch.Suggest.renderMenu;
+				searchField.data( "ui-autocomplete" )._renderItem = ShopSearch.Suggest.renderMenuItem;
+			} else {
+				console.warn('Unable to initalize search field because suggestURL is empty or there is no field.');
 			}
 		}
 	};
