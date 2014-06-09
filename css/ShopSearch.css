@@ -1,3 +1,28 @@
+.search-header {
+	margin: 0 0 0.5em 0;
+}
+.search-header .search-count {
+	float: left;
+}
+.search-header .search-sort {
+	float: right;
+	text-align: right;
+}
+.search-header .search-sort select {
+	display: inline-block;
+	width: auto;
+}
+
+.search-header:before,
+.search-header:after {
+	content: " ";
+	display: table;
+}
+
+.search-header:after {
+	clear: both;
+}
+
 /* suggestions dropdown ----------------------------------------------------------- */
 
 .shop-search.ui-autocomplete .ui-autocomplete-category {
@@ -25,6 +50,9 @@
 .shop-search.ui-autocomplete .product span.desc {
 	font-size: 0.8em;
 	font-style: italic;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: 500px;
 }
 .shop-search.ui-autocomplete .product img {
 	max-width: 60px;
@@ -37,6 +65,12 @@
 	min-height: 60px;
 }
 
+.shop-search.ui-autocomplete .ui-menu-item .ui-state-focus {
+	background: #ddd;
+	border-radius: 0;
+	border: none;
+	margin: 0;
+}
 
 /* make the form full inline ------------------------------------------------------ */
 
@@ -64,3 +98,4 @@
 #ShopSearchForm_SearchForm:after {
 	clear: both;
 }
+
