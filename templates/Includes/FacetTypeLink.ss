@@ -1,6 +1,8 @@
 <h4>$Label</h4>
 <ul>
 	<% loop $Values %>
-		<li><a href="$Link">$Label ($Count)</a></li>
+		<% if $Count > 0 %>
+			<li><a href="$Link">$Label ($Count)</a></li>
+		<% end_if %>
 	<% end_loop %>
 </ul>

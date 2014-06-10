@@ -121,10 +121,12 @@
 .facets .expander-container .expander .fa {
 	font-size: 1.5em;
 }
-.facets .facet-range, .facets .facet-checkbox {
+.facets .facet-range,
+.facets .facet-link,
+.facets .facet-checkbox {
 	padding-bottom: 15px;
 }
-.facets .facet-range h4, .facets .facet-checkbox h4 {
+.facets h4 {
 	font-size: 13px;
 	font-weight: 600;
 	color: #404040;
@@ -134,27 +136,21 @@
 .facets .range-facet-label {
 	padding-top: 10px;
 }
-.facets .facet-link {
-	margin: 0 -20px;
-}
-.facets .facet-range {
-	padding-top: 15px;
-	padding-bottom: 0;
-}
+
 .facets ul {
 	margin: 0;
 }
-.facets ul li {
-	padding-left: 20px;
+.facets .facet-checkbox ul li {
 	list-style: none;
 }
+.facets .facet-link ul li {
+	list-style: none;
+	margin-bottom: 6px;
+}
+
 .facets label {
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	width: 100%;
-}
-.facets label input[type=checkbox],
-.facets label .checkbox {
-	margin-bottom: .5em;
 }
