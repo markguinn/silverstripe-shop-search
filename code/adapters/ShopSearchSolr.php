@@ -690,7 +690,7 @@ XML;
 							if (!isset($facet['Values'][$val])) {
 								// for link type facets we want to add anything
 								// for checkboxes, if it's not in the provided list we leave it out
-								if ($facet['Type'] != ShopSearch::FACET_TYPE_CHECKBOX) {
+								if ($facet['Type'] != ShopSearch::FACET_TYPE_CHECKBOX && $count > 0) {
 									$facet['Values'][$val] = new ArrayData(array(
 										'Label'     => $val,
 										'Value'     => $val,
