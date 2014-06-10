@@ -1,0 +1,34 @@
+/**
+ * .expander = button/link that toggles expanded state (by adding .expanded class to the parent element)
+ * .expander-target = content that expands/contracts
+ * .expander-container = parent element of both
+ */
+.expander-container > .expander {
+	display: inline-block;
+}
+.expander-container > .expander > .for-expanded {
+	display: none;
+}
+.expander-container > .expander > .for-contracted {
+	display: inline-block;
+}
+.expander-container > .expander-target {
+	overflow: hidden;
+	display: block;
+	max-height: 1px;
+	opacity: 0.1;
+	-webkit-transition: 0.5s all ease;
+	-moz-transition: 0.5s all ease;
+	-o-transition: 0.5s all ease;
+	transition: 0.5s all ease;
+}
+.expander-container.expanded > .expander > .for-expanded {
+	display: inline-block;
+}
+.expander-container.expanded > .expander > .for-contracted {
+	display: none;
+}
+.expander-container.expanded > .expander-target {
+	max-height: 1000px;
+	opacity: 1.0;
+}

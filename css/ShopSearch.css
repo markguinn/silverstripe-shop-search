@@ -1,3 +1,5 @@
+/* header content ------------------------------------------------------------------ */
+
 .search-header {
 	margin: 0 0 0.5em 0;
 }
@@ -99,3 +101,60 @@
 	clear: both;
 }
 
+
+/* facets ------------------------------------------------------------------------ */
+
+.facets {
+	padding: 0px 20px 15px;
+}
+.facets .expander-container {
+	position: relative;
+	padding-left: 10px;
+}
+.facets .expander-container .expander {
+	color: #787878;
+	position: absolute;
+	left: -10px;
+	width: 15px;
+	text-align: center;
+}
+.facets .expander-container .expander .fa {
+	font-size: 1.5em;
+}
+.facets .facet-range, .facets .facet-checkbox {
+	padding-bottom: 15px;
+}
+.facets .facet-range h4, .facets .facet-checkbox h4 {
+	font-size: 13px;
+	font-weight: 600;
+	color: #404040;
+	position: relative;
+	left: -9px;
+}
+.facets .range-facet-label {
+	padding-top: 10px;
+}
+.facets .facet-link {
+	margin: 0 -20px;
+}
+.facets .facet-range {
+	padding-top: 15px;
+	padding-bottom: 0;
+}
+.facets ul {
+	margin: 0;
+}
+.facets ul li {
+	padding-left: 20px;
+	list-style: none;
+}
+.facets label {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	width: 100%;
+}
+.facets label input[type=checkbox],
+.facets label .checkbox {
+	margin-bottom: .5em;
+}
