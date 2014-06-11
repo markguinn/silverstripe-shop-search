@@ -31,7 +31,7 @@
 	// We define it outside the onready handler so that it can easily
 	// be unregistered from inside any other onready handler.
 	$(document.body).on('searchstate', function(e, url){
-		if (url) document.location.href = url;
+		if (url) window.location.assign(url);
 	});
 
 	// initialize search onready
