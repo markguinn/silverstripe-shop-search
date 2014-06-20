@@ -31,7 +31,18 @@
 	// We define it outside the onready handler so that it can easily
 	// be unregistered from inside any other onready handler.
 	$(document.body).on('searchstate', function(e, url){
-		if (url) window.location.assign(url);
+		if (url && url.substr(0, 1) != '/' && url.substr(0, 5) != 'http:') {
+			// There is a bug/feature in IE that causes document.location.href = '...'
+			// not to respect the base href with relative urls. This takes care of it.
+			var base = 	$('base');
+			if (base.length > 0) {
+				var baseHref = base.prop('href');
+				if (baseHref.substr(-1) != '/') baseHref += '/';
+				url = baseURI + url;
+			}
+		}
+
+		if (url) document.location.href = url;
 	});
 
 	// initialize search onready
