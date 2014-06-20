@@ -38,7 +38,7 @@
 			if (base.length > 0) {
 				var baseHref = base.prop('href');
 				if (baseHref.substr(-1) != '/') baseHref += '/';
-				url = baseURI + url;
+				url = baseHref + url;
 			}
 		}
 
