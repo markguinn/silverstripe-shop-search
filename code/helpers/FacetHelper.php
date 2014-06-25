@@ -363,7 +363,8 @@ class FacetHelper extends Object
 			->addInnerJoin('Product_StaticAttributeTypes', $baseTable.'.ID = Product_StaticAttributeTypes.ProductID')
 			->addInnerJoin('ProductAttributeType', 'Product_StaticAttributeTypes.ProductAttributeTypeID = ProductAttributeType.ID')
 			->addInnerJoin('Product_StaticAttributeValues', $baseTable.'.ID = Product_StaticAttributeValues.ProductID')
-			->addInnerJoin('ProductAttributeValue', 'Product_StaticAttributeValues.ProductAttributeValueID = ProductAttributeValue.ID')
+			->addInnerJoin('ProductAttributeValue', 'Product_StaticAttributeValues.ProductAttributeValueID = ProductAttributeValue.ID'
+			    . ' AND ProductAttributeValue.TypeID = ProductAttributeType.ID')
 			->setOrderBy(array(
 				'ProductAttributeType.Label' => 'ASC',
 				'ProductAttributeValue.Sort' => 'ASC',
