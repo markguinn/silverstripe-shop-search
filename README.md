@@ -23,7 +23,7 @@ FEATURES:
 
 REQUIREMENTS:
 -------------
-- Silverstripe 3.1 (3.0 may work but is untested and unsupported)
+- Silverstripe 3.1 (may work with 3.2/master but untested)
 - Shop Module 1.0
 - Fulltextsearch module (if using solr)
 

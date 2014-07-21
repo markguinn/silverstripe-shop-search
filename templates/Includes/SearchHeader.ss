@@ -1,4 +1,4 @@
-<div class="search-header">
+<div class="search-header" id="search-header">
 	<div class="search-count">
 		Showing $Matches.FirstItem-<span id="search-count-last" class="update-on-scroll">$Matches.LastItem</span>
 		of $Matches.getTotalItems results
