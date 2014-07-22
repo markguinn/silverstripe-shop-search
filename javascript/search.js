@@ -11,7 +11,7 @@
 
 	ShopSearch.init = function() {
 		// Search sorter
-		$('#sort').change(function(){
+		$(document.body).on('change', '#sort', function(){
 			var $this = $(this);
 			var url = $this.data('url');
 			url = url.replace('NEWSORTVALUE', encodeURIComponent($this.val()));
