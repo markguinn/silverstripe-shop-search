@@ -57,8 +57,9 @@ class ShopSearchControllerExtension extends Extension
 		// give a hook for processing ajax requests through a different template (i.e. for returning only fragments)
 		$tpl = Config::inst()->get('ShopSearch', 'ajax_results_template');
 		if (!empty($tpl) && Director::is_ajax()) return $this->owner->customise($results)->renderWith($tpl);
-		
-		return $this->owner->customise($results)->renderWith(array('ShopSearch_results', 'Page_results', 'Page'));
+
+		$this->owner->extend('updateSearchResultsResponse', $this->owner->request, $response, $results, $data);
+		return $response ? $response : $this->owner->customise($results)->renderWith(array('ShopSearch_results', 'Page_results', 'Page'));
 	}
 
 
