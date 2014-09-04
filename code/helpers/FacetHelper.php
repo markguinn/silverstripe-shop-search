@@ -481,7 +481,7 @@ class FacetHelper extends Object
 	 * @return ArrayList
 	 */
 	public function updateFacetState(ArrayList $facets, array $filters) {
-		foreach ($facets as &$facet) {
+		foreach ($facets as $facet) {
 			if ($facet->Type == ShopSearch::FACET_TYPE_CHECKBOX) {
 				if (empty($filters[$facet->Source])) {
 					// If the filter is not being used at all, we count
