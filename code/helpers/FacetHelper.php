@@ -198,7 +198,7 @@ class FacetHelper extends Object
 		$fasterMethod = (bool)$this->config()->faster_faceting;
 
 		// fill them in
-		foreach ($facets as $field => $facet) {
+		foreach ($facets as $field => &$facet) {
 			if (preg_match(self::config()->attribute_facet_regex, $field, $m)) {
 				$this->buildAttributeFacet($matches, $facet, $m[1]);
 				continue;
