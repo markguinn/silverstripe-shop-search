@@ -117,7 +117,7 @@
 					source:function(request, response){
 						//console.log('request', request);
 						var cacheKey;
-						var term = request.term;
+						var term = request.term.replace(/[^a-zA-Z0-9\s]/, '');
 						var select = searchField.closest('form').find('select');
 						if (select.length > 0) {
 							request[select.attr('name')] = select.val();
@@ -133,7 +133,7 @@
 						}
 
 						// Format the search terms for solr
-						var terms    = request.term.toLowerCase().split(/\s+/);
+						var terms    = term.toLowerCase().split(/\s+/);
 						var lastTerm = terms.length > 0 ? terms.pop() : '';
 						var prefix   = terms.length > 0 ? terms.join(' ')+' ' : '';
 						//terms.push(lastTerm);

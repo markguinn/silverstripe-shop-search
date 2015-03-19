@@ -75,6 +75,12 @@ class ShopSearch extends Object
 	/** @var string - if present, will create a copy of SiteTree_Title that's suited for alpha sorting */
 	private static $solr_title_sort_field = '';
 
+	/**
+	 * @var string - If present, everything matching the following regex will be removed from
+	 *               keyword search queries before passing to the search adapter.
+	 */
+	private static $keyword_filter_regex = '/[^a-zA-Z0-9\s]/';
+
 
 	/**
 	 * @return array
@@ -189,6 +195,9 @@ class ShopSearch extends Object
 
 		// do the search
 		$keywords = !empty($vars[$qs_q]) ? $vars[$qs_q] : '';
+		if ($keywordRegex = $this->config()->get('keyword_filter_regex')) {
+			$keywords = preg_replace($keywordRegex, '', $keywords);
+		}
 		$results  = self::adapter()->searchFromVars($keywords, $filters, $facets, $start, $limit, $sort);
 
 		// massage the results a bit
