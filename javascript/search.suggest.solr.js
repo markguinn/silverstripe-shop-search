@@ -25,6 +25,7 @@
 			solrURL:            document.location.protocol + "//" + document.location.host + ':8983/solr/ShopSearchSolr/select',
 			filterShowInSearch: true,
 			categoryFilter:     'Product_AllCategoryIDsRecursive',
+			keywordFilterRegex: /[^a-zA-Z0-9\s\-]/
 		},
 
 		/**
@@ -117,7 +118,7 @@
 					source:function(request, response){
 						//console.log('request', request);
 						var cacheKey;
-						var term = request.term.replace(/[^a-zA-Z0-9\s]/, '');
+						var term = request.term.replace(ShopSearch.Suggest.Config.keywordFilterRegex, '');
 						var select = searchField.closest('form').find('select');
 						if (select.length > 0) {
 							request[select.attr('name')] = select.val();

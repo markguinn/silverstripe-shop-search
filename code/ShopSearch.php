@@ -79,7 +79,7 @@ class ShopSearch extends Object
 	 * @var string - If present, everything matching the following regex will be removed from
 	 *               keyword search queries before passing to the search adapter.
 	 */
-	private static $keyword_filter_regex = '/[^a-zA-Z0-9\s]/';
+	private static $keyword_filter_regex = '/[^a-zA-Z0-9\s\-]/';
 
 
 	/**
