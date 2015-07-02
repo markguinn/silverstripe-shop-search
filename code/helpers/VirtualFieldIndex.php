@@ -366,7 +366,12 @@ class VirtualFieldIndex extends DataExtension
 	 * Trigger rebuild if needed
 	 */
 	public function onBeforeWrite() {
-		if ($this->isRebuilding || self::$disable_building) return;
+		if ($this->isRebuilding || self::$disable_building) {
+			return;
+		}
+
+		$queueFields = interface_exists('QueuedJob') ? array() : false;
+
 		foreach ($this->getVFISpec() as $field => $spec) {
 			$rebuild = false;
 
@@ -387,7 +392,19 @@ class VirtualFieldIndex extends DataExtension
 				}
 			}
 
-			if ($rebuild) $this->rebuildVFI($field);
+			if ($rebuild) {
+				if ($queueFields === false) {
+					$this->rebuildVFI($field);
+				} else {
+					$queueFields[] = $field;
+				}
+			}
+		}
+
+		// if the queued-jobs module is present, then queue up the rebuild
+		if ($queueFields) {
+			$job = new VirtualFieldIndexQueuedJob($this->owner, $queueFields);
+			$job->triggerProcessing();
 		}
 	}
 }
