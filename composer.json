@@ -17,7 +17,7 @@
 	},
 	"require": {
 		"silverstripe/framework": "~3.1",
-		"burnbright/silverstripe-shop": "~1.0"
+		"burnbright/silverstripe-shop": "*"
 	},
 	"suggest": {
 		"silverstripe/fulltextsearch": "dev-master"
