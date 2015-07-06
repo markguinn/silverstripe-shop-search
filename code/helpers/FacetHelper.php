@@ -242,6 +242,15 @@ class FacetHelper extends Object
 							$lbl = $obj->Nice();
 						} elseif (is_object($obj) && !empty($obj->Title)) {
 							$lbl = $obj->Title;
+						} elseif (
+							is_numeric($obj) &&
+							!empty($facet['LabelFormat']) &&
+							$facet['LabelFormat'] === 'Currency' &&
+							$facet['Type'] !== ShopSearch::FACET_TYPE_RANGE // this one handles it via javascript
+						) {
+							$tmp = new Currency($field);
+							$tmp->setValue($obj);
+							$lbl = $tmp->Nice();
 						} else {
 							$lbl = (string)$obj;
 						}

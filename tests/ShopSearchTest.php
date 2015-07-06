@@ -204,7 +204,11 @@ class ShopSearchTest extends SapphireTest
 		// Given a search with price and category facets ......................................
 		Config::inst()->update('ShopSearch', 'facets', array(
 			'Model'     => 'By Model',
-			'Price'     => 'By Price',
+			'Price'     => array(
+				'Label'       => 'By Price',
+				'Type'        => 'Link',
+				'LabelFormat' => 'Currency',
+			),
 			'Category'  => 'By Category',
 		));
 
