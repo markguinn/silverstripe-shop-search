@@ -31,6 +31,6 @@ script:
   - if [ "$COVERAGE" = "1" ]; then vendor/bin/phpunit -c ~/builds/ss/shop_search/phpunit.xml.dist --coverage-clover=~/builds/ss/shop_search/coverage.xml; fi
 
 after_success:
-  - if [ "$COVERAGE" = "1" ]; then cd shop; fi
+  - if [ "$COVERAGE" = "1" ]; then cd shop_search; fi
   - if [ "$COVERAGE" = "1" ]; then wget https://scrutinizer-ci.com/ocular.phar; fi
   - if [ "$COVERAGE" = "1" ]; then php ocular.phar code-coverage:upload -v --format=php-clover ~/builds/ss/shop_search/coverage.xml; fi
