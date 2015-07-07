@@ -333,14 +333,15 @@ class FacetHelper extends Object
 		if (is_array($baseTable)) $baseTable = reset($baseTable);
 
 		$q = $q->setSelect(array())
-			->selectField('ProductAttributeValue.ID', 'Value')
-			->selectField('ProductAttributeValue.Value', 'Label')
-			->selectField('count(distinct '.$baseTable.'.ID)', 'Count')
-			->addInnerJoin('Product_StaticAttributeValues', $baseTable.'.ID = Product_StaticAttributeValues.ProductID')
-			->addInnerJoin('ProductAttributeValue', 'Product_StaticAttributeValues.ProductAttributeValueID = ProductAttributeValue.ID')
-			->addWhere(sprintf("ProductAttributeValue.TypeID = '%d'", $typeID))
-			->setOrderBy('ProductAttributeValue.Sort', 'ASC')
-			->setGroupBy('ProductAttributeValue.ID')
+			->selectField('"ProductAttributeValue"."ID"', 'Value')
+			->selectField('"ProductAttributeValue"."Value"', 'Label')
+			->selectField('count(distinct '.$baseTable.'."ID")', 'Count')
+			->selectField('"ProductAttributeValue"."Sort"')
+			->addInnerJoin('Product_StaticAttributeValues', $baseTable.'."ID" = "Product_StaticAttributeValues"."ProductID"')
+			->addInnerJoin('ProductAttributeValue', '"Product_StaticAttributeValues"."ProductAttributeValueID" = "ProductAttributeValue"."ID"')
+			->addWhere(sprintf("\"ProductAttributeValue\".\"TypeID\" = '%d'", $typeID))
+			->setOrderBy('"ProductAttributeValue"."Sort"', 'ASC')
+			->setGroupBy('"ProductAttributeValue"."ID"')
 			->execute()
 		;
 
@@ -364,21 +365,22 @@ class FacetHelper extends Object
 		if (is_array($baseTable)) $baseTable = reset($baseTable);
 
 		$q = $q->setSelect(array())
-			->selectField('ProductAttributeType.ID', 'TypeID')
-			->selectField('ProductAttributeType.Label', 'TypeLabel')
-			->selectField('ProductAttributeValue.ID', 'Value')
-			->selectField('ProductAttributeValue.Value', 'Label')
-			->selectField('count(distinct '.$baseTable.'.ID)', 'Count')
-			->addInnerJoin('Product_StaticAttributeTypes', $baseTable.'.ID = Product_StaticAttributeTypes.ProductID')
-			->addInnerJoin('ProductAttributeType', 'Product_StaticAttributeTypes.ProductAttributeTypeID = ProductAttributeType.ID')
-			->addInnerJoin('Product_StaticAttributeValues', $baseTable.'.ID = Product_StaticAttributeValues.ProductID')
-			->addInnerJoin('ProductAttributeValue', 'Product_StaticAttributeValues.ProductAttributeValueID = ProductAttributeValue.ID'
-			    . ' AND ProductAttributeValue.TypeID = ProductAttributeType.ID')
+			->selectField('"ProductAttributeType"."ID"', 'TypeID')
+			->selectField('"ProductAttributeType"."Label"', 'TypeLabel')
+			->selectField('"ProductAttributeValue"."ID"', 'Value')
+			->selectField('"ProductAttributeValue"."Value"', 'Label')
+			->selectField('count(distinct '.$baseTable.'."ID")', 'Count')
+			->selectField('"ProductAttributeValue"."Sort"')
+			->addInnerJoin('Product_StaticAttributeTypes', $baseTable.'."ID" = "Product_StaticAttributeTypes"."ProductID"')
+			->addInnerJoin('ProductAttributeType', '"Product_StaticAttributeTypes"."ProductAttributeTypeID" = "ProductAttributeType"."ID"')
+			->addInnerJoin('Product_StaticAttributeValues', $baseTable.'."ID" = "Product_StaticAttributeValues"."ProductID"')
+			->addInnerJoin('ProductAttributeValue', '"Product_StaticAttributeValues"."ProductAttributeValueID" = "ProductAttributeValue"."ID"'
+			    . ' AND "ProductAttributeValue"."TypeID" = "ProductAttributeType"."ID"')
 			->setOrderBy(array(
-				'ProductAttributeType.Label' => 'ASC',
-				'ProductAttributeValue.Sort' => 'ASC',
+				'"ProductAttributeType"."Label"' => 'ASC',
+				'"ProductAttributeValue"."Sort"' => 'ASC',
 			))
-			->setGroupBy('ProductAttributeValue.ID')
+			->setGroupBy(array('"ProductAttributeValue"."ID"', '"ProductAttributeType"."ID"'))
 			->execute()
 		;
 
