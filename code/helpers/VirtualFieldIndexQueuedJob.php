@@ -51,6 +51,13 @@ class VirtualFieldIndexQueuedJob extends AbstractQueuedJob implements QueuedJob
 	 * Reprocess any needed fields
 	 */
 	public function process() {
+		Versioned::reading_stage('Stage');
+		$obj = $this->getObject();
+
+		if ($obj) {
+			$obj->rebuildVFI();
+		}
+
 		$this->isComplete = true;
 	}
 }
