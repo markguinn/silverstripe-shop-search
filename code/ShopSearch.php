@@ -251,24 +251,23 @@ class ShopSearch extends Object
 	 * @return SS_Query
 	 */
 	public function getSuggestQuery($str='') {
+		$hasResults = 'CASE WHEN max("SearchLog"."NumResults") > 0 THEN 1 ELSE 0 END';
+		$searchCount = 'count(distinct "SearchLog"."ID")';
 		$q = new SQLQuery();
 		$q = $q->setSelect('"SearchLog"."Query"')
 			// TODO: what to do with filter?
-			->selectField('count(distinct "SearchLog"."ID")', 'SearchCount')
+			->selectField($searchCount, 'SearchCount')
 			->selectField('max("SearchLog"."Created")', 'LastSearch')
 			->selectField('max("SearchLog"."NumResults")', 'NumResults')
+			->selectField($hasResults, 'HasResults')
 			->setFrom('"SearchLog"')
 			->setGroupBy('"SearchLog"."Query"')
-			->setOrderBy(array('HasResults DESC', 'SearchCount DESC'))
+			->setOrderBy(array(
+				"$hasResults DESC",
+				"$searchCount DESC"
+			))
 			->setLimit(Config::inst()->get('ShopSearch', 'suggest_limit'))
 		;
-
-		if (DB::getConn() instanceof MySQLDatabase) {
-			$q = $q->selectField('if(max("SearchLog"."NumResults") > 0, 1, 0)', 'HasResults');
-		} else {
-			// sqlite3 - should give 1 if there are any results and 0 otherwise
-			$q = $q->selectField('min(1, max("SearchLog"."NumResults"))', 'HasResults');
-		}
 
 		if (strlen($str) > 0) {
 			$q = $q->addWhere(sprintf('"SearchLog"."Query" LIKE \'%%%s%%\'', Convert::raw2sql($str)));
