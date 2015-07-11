@@ -28,4 +28,4 @@ before_script:
 
 script: ./shop_search/tests/travis/run_build.sh
 
-after_scipt: ./shop_search/tests/travis/upload_coverage.sh
+after_script: ./shop_search/tests/travis/upload_coverage.sh
