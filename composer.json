@@ -12,7 +12,9 @@
 	"extra": {
 		"installer-name": "shop_search",
 		"branch-alias": {
-			"dev-master": "1.0.x-dev"
+			"dev-master": "1.2.x-dev",
+			"1.1.2": "1.1.x-dev",
+			"1.0.1": "1.0.x-dev"
 		}
 	},
 	"require": {

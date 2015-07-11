@@ -52,7 +52,8 @@ DEVELOPERS:
 -----------
 * Mark Guinn - mark@adaircreative.com
 
-Pull requests always welcome. Follow Silverstripe coding standards.
+Pull requests always welcome. They should be made against the develop branch unless
+they're a bug fix for a specific version. Follow Silverstripe coding standards.
 
 
 LICENSE (MIT):
