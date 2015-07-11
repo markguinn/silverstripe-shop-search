@@ -216,7 +216,6 @@ class ShopSearchTest extends SapphireTest
 
 		$r = $s->search(array('q' => ''));
 		$this->assertEquals(3, $r->Facets->count(),     'There should be 3 facets');
-		print_r($r);
 		$price = $r->Facets->offsetGet(1);
 		$this->assertEquals(3, $price->Values->count(), 'There should be 3 prices');
 		$p1 = $price->Values->first();
