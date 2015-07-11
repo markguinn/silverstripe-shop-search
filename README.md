@@ -1,7 +1,12 @@
 Improved Search for Silverstripe Shop Submodule
 ===============================================
 
-[![Build Status](https://secure.travis-ci.org/markguinn/silverstripe-shop-search.png)](http://travis-ci.org/markguinn/silverstripe-shop-search)
+[![Latest Stable Version](https://poser.pugx.org/markguinn/silverstripe-shop-search/v/stable.png)](https://packagist.org/packages/markguinn/silverstripe-shop-search)
+[![Latest Unstable Version](https://poser.pugx.org/markguinn/silverstripe-shop-search/v/unstable.png)](https://packagist.org/packages/markguinn/silverstripe-shop-search)
+[![Build Status](https://travis-ci.org/markguinn/silverstripe-shop-search.svg?branch=master)](http://travis-ci.org/markguinn/silverstripe-shop-search)
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/markguinn/silverstripe-shop-search/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/markguinn/silverstripe-shop-search/?branch=master)
+[![Code Coverage](https://scrutinizer-ci.com/g/markguinn/silverstripe-shop-search/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/markguinn/silverstripe-shop-search/?branch=master)
+[![Total Downloads](https://poser.pugx.org/markguinn/silverstripe-shop-search/downloads.png)](https://packagist.org/packages/markguinn/silverstripe-shop-search)
 
 Provides more advanced search features that are common on e-commerce
 sites. It is intended for use with the Shop <https://github.com/burnbright/silverstripe-shop>
