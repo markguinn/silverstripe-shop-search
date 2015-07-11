@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -e
 if [ -n "$COVERAGE" ]; then
 	cd shop_search
 	wget https://scrutinizer-ci.com/ocular.phar
