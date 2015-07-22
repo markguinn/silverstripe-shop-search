@@ -21,7 +21,9 @@
 		$label.children('input')[0].checked = myState;
 
 		if ($label.data('parent')) {
-			updateParentCheckbox( $this.closest('.facet-checkbox').find('label[data-value='+$label.data('parent')+']') );
+			updateParentCheckbox(
+				$this.closest('.facet-checkbox').find('label[data-value='+$label.data('parent')+']')
+			);
 		}
 	}
 
@@ -30,39 +32,43 @@
 			// Facet checkboxes - this seems wonky to have to have a handler on both the label
 			// and the checkbox but discard the label event but that's the only way i've found
 			// that works consistently.
-			$('.facet-checkbox input[type=checkbox]').click(function(e){
-				if (e.target.nodeName != 'INPUT') return;
-				var $this  = $(this),
-					$root  = $this.closest('ul[data-root]'),
-					$label = $this.closest('label');
+			$('.facet-checkbox input[type=checkbox]').click($.proxy(this.onClick, this));
+		},
 
-				// If this is a hierarchical dataset, go ahead and check/uncheck the parents and children
-				if ($this.closest('ul').data('hierarchy')) {
-					var myState = e.target.checked;
+		onClick:function(e){
+			if (e.target.nodeName != 'INPUT') return;
+			var $this  = $(e.target),
+				$root  = $this.closest('ul[data-root]'),
+				$label = $this.closest('label');
 
-					$this.closest('li').find('ul input[type=checkbox]').each(function(index, el){
-						el.checked = myState;
-					});
+			// If this is a hierarchical dataset, go ahead and check/uncheck the parents and children
+			if ($this.closest('ul').data('hierarchy')) {
+				var myState = e.target.checked;
 
-					if ($label.data('parent')) {
-						updateParentCheckbox( $this.closest('.facet-checkbox').find('label[data-value='+$label.data('parent')+']') );
-					}
-				}
-
-				// construct the new url
-				var url  = $label.data('url'),
-					info = $root.data('link-details'),
-					sel  = info.leaves ? 'label:not([data-children]) > input[type=checkbox]' : 'input[type=checkbox]',
-					key  = '&' + encodeURIComponent(info.filter + '[' + info.source + ']') + '=LIST~',
-					ids  = [];
-
-				$root.find(sel).each(function(index, el){
-					if (el.checked) ids.push(el.value);
+				$this.closest('li').find('ul input[type=checkbox]').each(function(index, el){
+					el.checked = myState;
 				});
 
-				// go to the new url
-				$(document.body).trigger('searchstate', url + key + ids.join(','));
+				if ($label.data('parent')) {
+					updateParentCheckbox(
+						$this.closest('.facet-checkbox').find('label[data-value='+$label.data('parent')+']')
+					);
+				}
+			}
+
+			// construct the new url
+			var url  = $label.data('url'),
+				info = $root.data('link-details'),
+				sel  = info.leaves ? 'label:not([data-children]) > input[type=checkbox]' : 'input[type=checkbox]',
+				key  = '&' + encodeURIComponent(info.filter + '[' + info.source + ']') + '=LIST~',
+				ids  = [];
+
+			$root.find(sel).each(function(index, el){
+				if (el.checked) ids.push(el.value);
 			});
+
+			// go to the new url
+			$(document.body).trigger('searchstate', url + key + ids.join(','));
 		}
 	};
 }(jQuery, this, this.document));
