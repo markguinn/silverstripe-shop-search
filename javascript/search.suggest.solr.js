@@ -137,11 +137,16 @@
 						var terms    = term.toLowerCase().split(/\s+/);
 						var lastTerm = terms.length > 0 ? terms.pop() : '';
 						var prefix   = terms.length > 0 ? terms.join(' ')+' ' : '';
-						//terms.push(lastTerm);
+
+						// we want any complete words to be required and any incomplete words
+						// not to be required so if you type "green lolly" we want a query
+						// string like "+green lolly lolly*"
+						for (var i = 0; i < terms.length; i++) terms[i] = '+' + terms[i];
+						terms.push(lastTerm);
 						terms.push(lastTerm+'*'); // this allows for partial words to still match
 
 						// build query into url
-						var url = suggestURL + '&q=' + encodeURIComponent('+' + terms.join(' +'))
+						var url = suggestURL + '&q=' + encodeURIComponent(terms.join(' '))
 							+ '&facet.prefix=' + encodeURIComponent(lastTerm);
 
 						if (ShopSearch.Suggest.Config.filterShowInSearch) {
