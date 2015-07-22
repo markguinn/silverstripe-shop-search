@@ -22,6 +22,9 @@ class FacetHelper extends Object
 	/** @var string - I don't know why you'd want to override this, but you could if you wanted */
 	private static $attribute_facet_regex = '/^ATT(\d+)$/';
 
+	/** @var bool - For checkbox facets, is the initial state all checked or all unchecked? */
+	private static $default_checkbox_state = true;
+
 
 	/**
 	 * @return FacetHelper
@@ -498,7 +501,7 @@ class FacetHelper extends Object
 					// If the filter is not being used at all, we count
 					// all values as active.
 					foreach ($facet->Values as $value) {
-						$value->Active = true;
+						$value->Active = (bool)FacetHelper::config()->default_checkbox_state;
 					}
 				} else {
 					$filterVals = $filters[$facet->Source];
