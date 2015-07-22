@@ -27,6 +27,30 @@ class ShopSearchControllerExtension extends Extension
 		$results  = ShopSearch::inst()->search($data);
 		$baseLink = $this->owner->getRequest()->getURL(false);
 
+		// if there was only one category filter, remember it for the category dropdown to retain it's value
+		if (!ShopSearchForm::config()->disable_category_dropdown) {
+			$qs_filters  = (string)Config::inst()->get('ShopSearch', 'qs_filters');
+			$categoryKey = (string)ShopSearchForm::config()->category_field;
+
+			if (preg_match('/\[(.+)\]/', $categoryKey, $matches)) {
+				// get right of the f[] around the actual key if present
+				$categoryKey = $matches[1];
+			}
+
+			if (!empty($data[$qs_filters][$categoryKey])) {
+				$categoryID = $data[$qs_filters][$categoryKey];
+				if (is_numeric($categoryID)) {
+					// If it's set in the dropdown it will just be a number
+					// If it's set from the checkboxes it will be something like LIST~1,2,3,4
+					// We only want to remember the value in the former case
+					Session::set('LastSearchCatID', $categoryID);
+				}
+			} else {
+				// If they unchecked every value, then clear the dropdown as well
+				Session::clear('LastSearchCatID');
+			}
+		}
+
 		// add links for any facets
 		if ($results->Facets && $results->Facets->count()) {
 			$qs_ps      = Config::inst()->get('ShopSearch', 'qs_parent_search');

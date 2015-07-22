@@ -34,7 +34,7 @@ class ShopSearchForm extends Form
 		$fields = new FieldList($searchField);
 		if (!self::config()->disable_category_dropdown) {
 			$cats     = ShopSearch::get_category_hierarchy(0, '', self::config()->category_max_depth);
-			$catField = new DropdownField(self::get_category_field(), '', $cats);
+			$catField = new DropdownField(self::get_category_field(), '', $cats, Session::get('LastSearchCatID'));
 
 			$emptyString = self::config()->category_empty_string;
 			if ($emptyString !== 'NONE') {
