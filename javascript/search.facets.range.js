@@ -29,6 +29,10 @@
 					input.val('RANGE~' + vals.join('~'));
 					if (label.data('format') == 'Currency') {
 						label.html('$' + vals[0].toFixed(2) + ' - $' + vals[1].toFixed(2));
+					} else if (label.data('format') == 'Percentage100') {
+						label.html(Math.floor(vals[0]) + '% - ' + Math.floor(vals[1]) + '%');
+					} else if (label.data('format') == 'Percentage') {
+						label.html(Math.floor(vals[0] * 100.0) + '% - ' + Math.floor(vals[1] * 100.0) + '%');
 					} else {
 						label.html(vals.join(' - '));
 					}

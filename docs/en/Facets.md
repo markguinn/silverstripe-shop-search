@@ -12,6 +12,7 @@ currently 3 types:
   As such, you must define all the available options ahead of time.
 * Range Facets - display a slider. Most useful for things like price.
 
+
 Example
 -------
 This example assumes you have already set up virtual field indexes
@@ -47,3 +48,15 @@ You would then just include something like this:
 ```
 
 In the sidebar of Page_results.ss.
+
+
+### Options for LabelFormat
+
+These are currently only present on Range type facets. Other types
+use the underlying DB field for formatting.
+
+* Currency
+* Percentage
+* Percentage100 - same as above but expects 0-100 instead of 0.0-1.0
+
+TODO: these options should be implemented more broadly and flexibly
