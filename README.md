@@ -8,6 +8,8 @@ Improved Search for Silverstripe Shop Submodule
 [![Code Coverage](https://scrutinizer-ci.com/g/markguinn/silverstripe-shop-search/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/markguinn/silverstripe-shop-search/?branch=master)
 [![Total Downloads](https://poser.pugx.org/markguinn/silverstripe-shop-search/downloads.png)](https://packagist.org/packages/markguinn/silverstripe-shop-search)
 
+[![Join the chat at https://gitter.im/markguinn/silverstripe-shop-search](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/markguinn/silverstripe-shop-search?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 Provides more advanced search features that are common on e-commerce
 sites. It is intended for use with the Shop <https://github.com/burnbright/silverstripe-shop>
 module, but could probably be used in other contexts. There are few, if
