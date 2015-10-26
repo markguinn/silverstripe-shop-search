@@ -78,7 +78,9 @@ class FacetHelper extends Object
 					// will catch the majority of cases as long as the extension is applied to the
 					// Product class instead of a subclass.
 					$list = $list
-						->innerJoin('Product_StaticAttributeValues', "\"SiteTree\".\"ID\" = \"Product_StaticAttributeValues\".\"ProductID\"")
+						->innerJoin('Product_StaticAttributeTypes', "\"SiteTree\".\"ID\" = \"Product_StaticAttributeTypes\".\"ProductID\"")
+						->innerJoin('ProductAttributeValue', "\"Product_StaticAttributeTypes\".\"ProductAttributeTypeID\" = \"ProductAttributeValue\".\"TypeID\"")
+						->innerJoin('Product_StaticAttributeValues', "\"SiteTree\".\"ID\" = \"Product_StaticAttributeValues\".\"ProductID\" AND \"ProductAttributeValue\".\"ID\" = \"Product_StaticAttributeValues\".\"ProductAttributeValueID\"")
 						->filter("Product_StaticAttributeValues.ProductAttributeValueID", $filterVal);
 				} else {
 					$list = $list->filter($this->processFilterField($sing, $filterField, $filterVal));
