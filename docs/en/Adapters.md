@@ -33,7 +33,8 @@ That extension is fine but you're limited to searching SiteTree and File.
 
 **Setup**
 If you're not using FullTextSearchable, set up a fulltext index like so:
-```
+
+```yml
 class MyModel extends DataObject {
 	// ...
 
@@ -48,9 +49,53 @@ class MyModel extends DataObject {
 	// ...
 }
 ```
+
 The adapter will look for the "SearchFields" index.
 
 NOTE: Paging is not yet implemented
+
+### Example for searchable shop products
+
+In order to search multiple fields across multiple tables (which is likely the case with a complex setup such as a shop), you need to define several indexes.
+
+In this example we want to enable MySQL fulltext search for `Product` and search the `Title`, `Content` and `InternalItemID` (SKU) fields.
+
+First, let's start with the ShopSearch configuration. Add the following to a config file of your choice (usually `mysite/_config/config.yml`):
+
+```yml
+ShopSearch:
+  # Use MySQL fulltext search
+  adapter_class: ShopSearchMysql
+  
+  # Disable buyables to exclude ProductVariation. 
+  # Leave this out, if you also need ProductVariations.
+  buyables_are_searchable: false
+  
+  # Set the searchable classes 
+  # (this defaults to all buyables, if buyables_are_searchable is true)
+  searchable:
+    - Product
+```
+
+Since we will search both the `Product` and `SiteTree` tables, we need to add a fulltext index to both classes (also best done via YAML config files).
+
+```yml
+SiteTree:
+  indexes:
+    SiteTreeSearchFields:
+      type: fulltext
+      name: SearchFields
+      value: '"Title","Content"'
+
+Product:
+  indexes:
+    ProductSearchFields:
+      type: fulltext
+      name: SearchFields
+      value: '"InternalItemID"'
+```
+
+**IMPORTANT:** Set the index in the config to a unique value, so that the previous keys aren't overwritten. Eg. `SiteTreeSearchFields` and `ProductSearchFields`. The `name` should be set to `SearchFields` for all the indexes though.
 
 
 ShopSearchSolr
