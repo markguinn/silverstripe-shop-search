@@ -29,7 +29,21 @@ class ShopSearchMysql extends Object implements ShopSearchAdapter
 			$keywordFields = $this->getSearchFields($className);
 
 			// build the filter
-			$list = $list->where(sprintf("MATCH (%s) AGAINST ('%s')", $keywordFields, Convert::raw2sql($keywords)));
+			$filter = array();
+
+			// Use parametrized query if SilverStripe >= 3.2
+			if(SHOP_SEARCH_IS_SS32){
+				foreach($keywordFields as $indexFields){
+					$filter[] = array("MATCH ($indexFields) AGAINST (?)" => $keywords);
+				}
+				$list = $list->whereAny($filter);
+			} else {
+				foreach($keywordFields as $indexFields){
+					$filter[] = sprintf("MATCH ($indexFields) AGAINST ('%s')", Convert::raw2sql($keywords));
+				}
+				// join all the filters with an "OR" statement
+				$list = $list->where(implode(' OR ', $filter));
+			}
 
 			// add in any other filters
 			$list = FacetHelper::inst()->addFiltersToDataList($list, $filters);
@@ -47,22 +61,27 @@ class ShopSearchMysql extends Object implements ShopSearchAdapter
 
 	/**
 	 * @param $className
-	 * @return string
+	 * @return array an array containing fields per index
 	 * @throws Exception
 	 */
 	protected function getSearchFields($className) {
 		$indexes = Config::inst()->get($className, 'indexes');
-		//Debug::dump($indexes);
+
+		$indexList = array();
 		foreach ($indexes as $name => $index) {
 			if (is_array($index)) {
 				if (!empty($index['type']) && $index['type'] == 'fulltext' && !empty($index['value'])) {
-					return $index['value']; //preg_split('/,\s*/', trim($index['values']));
+					$indexList[] = trim($index['value']);
 				}
 			} elseif (preg_match('/fulltext\((.+)\)/', $index, $m)) {
-				return $m[1]; //preg_split('/,\s*/', trim($m[1]));
+				$indexList[] = trim($m[1]);
 			}
 		}
 
-		throw new Exception("Class $className does not appear to have any fulltext indexes");
+		if(count($indexList) === 0){
+			throw new Exception("Class $className does not appear to have any fulltext indexes");
+		}
+
+		return $indexList;
 	}
 }
