@@ -14,7 +14,7 @@ class ShopSearchControllerExtension extends Extension
 	 * @return ShopSearchForm
 	 */
 	public function SearchForm() {
-		return new ShopSearchForm($this->owner, 'SearchForm', $this->owner->Link() . 'search-suggest');
+		return ShopSearchForm::create($this->owner, 'SearchForm', $this->owner->Link() . 'search-suggest');
 	}
 
 
@@ -63,7 +63,7 @@ class ShopSearchControllerExtension extends Extension
 			$vars   = json_decode(base64_decode($src), true);
 
 			// log the search
-			$log = new SearchLog(array(
+			$log = SearchLog::create(array(
 				'Query'         => strtolower($vars[$qs_q]),
 				'Link'          => $req->getURL(false), // These searches will never have child searches, but this will allow us to know what they clicked
 				'NumResults'    => $vars['total'],

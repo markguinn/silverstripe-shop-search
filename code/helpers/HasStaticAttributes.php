@@ -22,23 +22,23 @@ class HasStaticAttributes extends DataExtension
 	 */
 	public function updateCMSFields(FieldList $fields) {
 		$fields->addFieldsToTab('Root.Attributes', array(
-			new HeaderField('Applicable Attribute Types'),
-			new CheckboxSetField('StaticAttributeTypes', 'Static Attribute Types', ProductAttributeType::get()->map("ID", "Title")),
-			new LiteralField('staticattributehelp', '<p>Select any attributes that apply to this product and click Save.</p>'),
-			new HeaderField('Attributes'),
+			HeaderField::create('Applicable Attribute Types'),
+			CheckboxSetField::create('StaticAttributeTypes', 'Static Attribute Types', ProductAttributeType::get()->map("ID", "Title")),
+			LiteralField::create('staticattributehelp', '<p>Select any attributes that apply to this product and click Save.</p>'),
+			HeaderField::create('Attributes'),
 		));
 
 		foreach ($this->owner->StaticAttributeTypes() as $type) {
 			$source = $this->getValuesClosure($type->ID);
 
-			$newValFields = new FieldList(array(
+			$newValFields = FieldList::create(array(
 				TextField::create('Value', 'Label'),
 				HiddenField::create('TypeID', '', $type->ID),
 			));
 
-			$newValReq = new RequiredFields('Value');
+			$newValReq = RequiredFields::create('Value');
 
-			$valuesField = new HasStaticAttributes_CheckboxSetField('StaticAttributeValues-'.$type->ID, $type->Title, $source());
+			$valuesField = HasStaticAttributes_CheckboxSetField::create('StaticAttributeValues-'.$type->ID, $type->Title, $source());
 			$valuesField->setValue( $this->owner->StaticAttributeValues()->filter('TypeID', $type->ID)->getIDList() );
 			$valuesField->useAddNew('ProductAttributeValue', $source, $newValFields, $newValReq);
 

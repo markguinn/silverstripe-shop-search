@@ -226,7 +226,7 @@ class ShopSearch extends Object
 
 		// save the log record
 		if ($start == 0 && $logSearch && (!empty($keywords) || !empty($filters))) { // && !in_array($searchHash, $sessSearches)) {
-			$log = new SearchLog(array(
+			$log = SearchLog::create(array(
 				'Query'         => $loggedQuery,
 				'Title'         => !empty($vars[$qs_t]) ? $vars[$qs_t] : '',
 				'Link'          => Controller::curr()->getRequest()->getURL(true), // I'm not 100% happy with this, but can't think of a better way
