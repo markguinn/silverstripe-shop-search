@@ -41,7 +41,7 @@ class FacetedCategory extends SiteTreeExtension
 			$spec = FacetHelper::inst()->expandFacetSpec( $this->getFacetSpec() );
 			$facets = array();
 			foreach ($spec as $f => $v) $facets[$f] = $v['Label'];
-			$fields->addFieldToTab('Root.Facets', new CheckboxSetField('DisabledFacets', "Don't show the following facets for this category:", $facets));
+			$fields->addFieldToTab('Root.Facets', CheckboxSetField::create('DisabledFacets', "Don't show the following facets for this category:", $facets));
 		}
 	}
 

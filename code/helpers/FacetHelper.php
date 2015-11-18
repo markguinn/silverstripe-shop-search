@@ -253,7 +253,7 @@ class FacetHelper extends Object
 							$facet['LabelFormat'] === 'Currency' &&
 							$facet['Type'] !== ShopSearch::FACET_TYPE_RANGE // this one handles it via javascript
 						) {
-							$tmp = new Currency($field);
+							$tmp = Currency::create($field);
 							$tmp->setValue($obj);
 							$lbl = $tmp->Nice();
 						} else {

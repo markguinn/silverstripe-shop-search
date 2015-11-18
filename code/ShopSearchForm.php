@@ -27,14 +27,14 @@ class ShopSearchForm extends Form
 	 * @param string     $suggestURL
 	 */
 	function __construct($controller, $method, $suggestURL = '') {
-		$searchField = new TextField('q', '');
+		$searchField = TextField::create('q', '');
 		$searchField->setAttribute('placeholder', _t('ShopSearch.SEARCH', 'Search'));
 		if ($suggestURL) $searchField->setAttribute('data-suggest-url', $suggestURL);
 
-		$fields = new FieldList($searchField);
+		$fields = FieldList::create($searchField);
 		if (!self::config()->disable_category_dropdown) {
 			$cats     = ShopSearch::get_category_hierarchy(0, '', self::config()->category_max_depth);
-			$catField = new DropdownField(self::get_category_field(), '', $cats, Session::get('LastSearchCatID'));
+			$catField = DropdownField::create(self::get_category_field(), '', $cats, Session::get('LastSearchCatID'));
 
 			$emptyString = self::config()->category_empty_string;
 			if ($emptyString !== 'NONE') {
@@ -44,7 +44,7 @@ class ShopSearchForm extends Form
 			$fields->push($catField);
 		}
 
-		parent::__construct($controller, $method, $fields, new FieldList(array(FormAction::create('results', _t('ShopSearch.GO', 'Go')))));
+		parent::__construct($controller, $method, $fields, FieldList::create(array(FormAction::create('results', _t('ShopSearch.GO', 'Go')))));
 
 		$this->setFormMethod('GET');
 		$this->disableSecurityToken();
