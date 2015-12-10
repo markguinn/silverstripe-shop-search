@@ -12,9 +12,23 @@
 
 	window.ShopSearch.Suggest = {
 		init:function(){
-			var searchField = $('#ShopSearchForm_SearchForm_q'),
-				suggestURL  = searchField.data('suggest-url'),
-				cache       = {};
+			var searchField        = $('#ShopSearchForm_SearchForm_q'),
+				suggestURL         = searchField.data('suggest-url'),
+				resultsContainer   = '.ui-autocomplete',
+				suggestionResult   = 'search-suggestion',
+				cache              = {};
+
+			searchField.click(function() {
+				if($(resultsContainer).children().length > 0 && searchField.val().length > 0) {
+					$(resultsContainer).show();
+				}
+			});
+
+			$(document.body).on('click', '.' + suggestionResult, function (event) {
+				event.preventDefault();
+				searchField.autocomplete('search');
+				$(resultsContainer).show();
+			});
 
 			if (suggestURL && searchField.length > 0) {
 				searchField.autocomplete({
@@ -56,6 +70,11 @@
 									data.products[i].category = 'Products';
 									out.push(data.products[i]);
 								}
+							} else {
+								out.push({
+									empty: 'No matches found for "<b>' + term + '</b>"',
+									category: 'Products'
+								});
 							}
 
 							cache[cacheKey] = out;
@@ -64,21 +83,21 @@
 					}
 				});
 
-				searchField.data( "ui-autocomplete" )._renderMenu = function( ul, items ) {
+				searchField.data("ui-autocomplete")._renderMenu = function(ul, items) {
 					var self = this,
 						currentCategory = "";
 
 					ul.addClass('shop-search');
-					$.each( items, function( index, item ) {
-						if ( item.category != currentCategory ) {
-							ul.append( "<li class='ui-autocomplete-category'>" + item.category + "</li>" );
+					$.each(items, function(index, item) {
+						if (item.category != currentCategory) {
+							ul.append("<li class='ui-autocomplete-category'>" + item.category + "</li>");
 							currentCategory = item.category;
 						}
-						self._renderItemData( ul, item );
+						self._renderItemData(ul, item);
 					});
 				};
 
-				searchField.data( "ui-autocomplete" )._renderItem = function(ul, item) {
+				searchField.data("ui-autocomplete")._renderItem = function(ul, item) {
 					var li = $('<li>');
 
 					if (item.title) {
@@ -96,8 +115,10 @@
 						if (item.original_price) price.prepend('<del>'+item.original_price+'</del> ');
 
 						a.appendTo(li);
-					} else {
-						$('<a>').html(item.label).appendTo(li);
+					} else if (item.empty) {
+						$('<span>').html(item.empty).appendTo(li);
+					}else {
+						$('<a>').html(item.label).addClass(suggestionResult).attr('href', '#').appendTo(li);
 					}
 
 					return li.appendTo(ul);
