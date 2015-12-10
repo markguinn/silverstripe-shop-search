@@ -338,7 +338,7 @@ class ShopSearch extends Object
 					'title' => $prod->Title,
 					'desc'  => $prod->obj('Content')->Summary(),
 					'thumb' => $thumb ? $thumb->Link() : '',
-					'price' => $prod->getPrice()->Nice(),
+					'price' => $prod->obj('Price')->Nice(),
 				);
 
 				if ($prod->hasExtension('HasPromotionalPricing') && $prod->hasValidPromotion()) {
