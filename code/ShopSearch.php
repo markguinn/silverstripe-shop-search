@@ -352,6 +352,8 @@ class ShopSearch extends Object
 			$results['products'] = $products;
 		}
 
+		$this->extend('updateSuggestWithResults', $results, $keywords, $filters);
+
 		return $results;
 	}
 }
