@@ -8,57 +8,62 @@
  * @package shop_search
  * @subpackage helpers
  */
-if(!interface_exists('QueuedJob')) return;
+if (!interface_exists('QueuedJob')) {
+    return;
+}
 
 class VirtualFieldIndexQueuedJob extends AbstractQueuedJob implements QueuedJob
 {
-	/**
-	 * The QueuedJob queue to use when processing updates
-	 * @config
-	 * @var int
-	 */
-	private static $reindex_queue = 2; // QueuedJob::QUEUED;
+    /**
+     * The QueuedJob queue to use when processing updates
+     * @config
+     * @var int
+     */
+    private static $reindex_queue = 2; // QueuedJob::QUEUED;
 
 
-	/**
-	 * @param DataObject $object
-	 * @param array $fields
-	 */
-	public function __construct($object, array $fields) {
-		$this->setObject($object);
-		$this->rebuildFields = $fields;
-	}
+    /**
+     * @param DataObject $object
+     * @param array $fields
+     */
+    public function __construct($object, array $fields)
+    {
+        $this->setObject($object);
+        $this->rebuildFields = $fields;
+    }
 
 
-	/**
-	 * Helper method
-	 */
-	public function triggerProcessing() {
-		singleton('QueuedJobService')->queueJob($this);
-	}
+    /**
+     * Helper method
+     */
+    public function triggerProcessing()
+    {
+        singleton('QueuedJobService')->queueJob($this);
+    }
 
 
-	/**
-	 * @return string
-	 */
-	public function getTitle() {
-		$obj = $this->getObject();
-		return "Update Virtual Field Indexes: " . ($obj ? $obj->getTitle() : '???');
-	}
+    /**
+     * @return string
+     */
+    public function getTitle()
+    {
+        $obj = $this->getObject();
+        return "Update Virtual Field Indexes: " . ($obj ? $obj->getTitle() : '???');
+    }
 
 
-	/**
-	 * Reprocess any needed fields
-	 */
-	public function process() {
-		Versioned::reading_stage('Stage');
-		$obj = $this->getObject();
+    /**
+     * Reprocess any needed fields
+     */
+    public function process()
+    {
+        Versioned::reading_stage('Stage');
+        $obj = $this->getObject();
 
-		if ($obj) {
-			$obj->rebuildVFI();
-		}
+        if ($obj) {
+            $obj->rebuildVFI();
+        }
 
-		$this->isComplete = true;
-	}
+        $this->isComplete = true;
+    }
 }
-

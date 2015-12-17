@@ -16,117 +16,138 @@
  */
 class FacetedCategory extends SiteTreeExtension
 {
-	private static $db = array(
-		'DisabledFacets' => 'Text', // This will be a comma-delimited list of facets that aren't used for a given category
-	);
+    private static $db = array(
+        'DisabledFacets' => 'Text', // This will be a comma-delimited list of facets that aren't used for a given category
+    );
 
-	/** @var array - facet definition - see ShopSearch and/or docs/en/Facets.md for format */
-	private static $facets = array();
+    /** @var array - facet definition - see ShopSearch and/or docs/en/Facets.md for format */
+    private static $facets = array();
 
-	/** @var bool - if true there will be a tab in the cms to disable some or all defined facets */
-	private static $show_disabled_facets_tab = true;
+    /** @var bool - if true there will be a tab in the cms to disable some or all defined facets */
+    private static $show_disabled_facets_tab = true;
 
-	/** @var string - which method should we use to get the child products for FilteredProducts */
-	private static $products_method = 'ProductsShowable';
+    /** @var string - which method should we use to get the child products for FilteredProducts */
+    private static $products_method = 'ProductsShowable';
 
-	/** @var bool - automatically create facets for static attributes */
-	private static $auto_facet_attributes = false;
-
-
-	/**
-	 * @param FieldList $fields
-	 */
-	public function updateCMSFields(FieldList $fields) {
-		if (Config::inst()->get('FacetedCategory', 'show_disabled_facets_tab')) {
-			$spec = FacetHelper::inst()->expandFacetSpec( $this->getFacetSpec() );
-			$facets = array();
-			foreach ($spec as $f => $v) $facets[$f] = $v['Label'];
-			$fields->addFieldToTab('Root.Facets', CheckboxSetField::create('DisabledFacets', "Don't show the following facets for this category:", $facets));
-		}
-	}
+    /** @var bool - automatically create facets for static attributes */
+    private static $auto_facet_attributes = false;
 
 
-	/**
-	 * @return Controller
-	 */
-	protected function getController() {
-		return ($this->owner instanceof Controller) ? $this->owner : Controller::curr();
-	}
+    /**
+     * @param FieldList $fields
+     */
+    public function updateCMSFields(FieldList $fields)
+    {
+        if (Config::inst()->get('FacetedCategory', 'show_disabled_facets_tab')) {
+            $spec = FacetHelper::inst()->expandFacetSpec($this->getFacetSpec());
+            $facets = array();
+            foreach ($spec as $f => $v) {
+                $facets[$f] = $v['Label'];
+            }
+            $fields->addFieldToTab('Root.Facets', CheckboxSetField::create('DisabledFacets', "Don't show the following facets for this category:", $facets));
+        }
+    }
 
 
-	/**
-	 * @return array
-	 */
-	protected function getFacetSpec() {
-		$spec = Config::inst()->get('FacetedCategory', 'facets');
-		return (empty($spec) || !is_array($spec)) ? array() : $spec;
-	}
+    /**
+     * @return Controller
+     */
+    protected function getController()
+    {
+        return ($this->owner instanceof Controller) ? $this->owner : Controller::curr();
+    }
 
 
-	/**
-	 * @return array
-	 */
-	protected function getFilters() {
-		$qs_f       = Config::inst()->get('ShopSearch', 'qs_filters');
-		if (!$qs_f) return array();
-		$request    = $this->getController()->getRequest();
-		$filters    = $request->requestVar($qs_f);
-		if (empty($filters) || !is_array($filters)) return array();
-		return FacetHelper::inst()->scrubFilters($filters);
-	}
+    /**
+     * @return array
+     */
+    protected function getFacetSpec()
+    {
+        $spec = Config::inst()->get('FacetedCategory', 'facets');
+        return (empty($spec) || !is_array($spec)) ? array() : $spec;
+    }
 
 
-	/**
-	 * @param bool $recursive
-	 * @return mixed
-	 */
-	public function FilteredProducts($recursive=true) {
-		if (!isset($this->_filteredProducts)) {
-			$fn = Config::inst()->get('FacetedCategory', 'products_method');
-			if (empty($fn)) $fn = 'ProductsShowable';
-			$this->_filteredProducts = $this->owner->$fn($recursive);
-			$this->_filteredProducts = FacetHelper::inst()->addFiltersToDataList($this->_filteredProducts, $this->getFilters());
-		}
-
-		return $this->_filteredProducts;
-	}
-
-	protected $_filteredProducts;
-
-
-	/**
-	 * @return array
-	 */
-	public function getDisabledFacetsArray() {
-		if (empty($this->owner->DisabledFacets)) return array();
-		return explode(',', $this->owner->DisabledFacets);
-	}
+    /**
+     * @return array
+     */
+    protected function getFilters()
+    {
+        $qs_f       = Config::inst()->get('ShopSearch', 'qs_filters');
+        if (!$qs_f) {
+            return array();
+        }
+        $request    = $this->getController()->getRequest();
+        $filters    = $request->requestVar($qs_f);
+        if (empty($filters) || !is_array($filters)) {
+            return array();
+        }
+        return FacetHelper::inst()->scrubFilters($filters);
+    }
 
 
-	/**
-	 * @return ArrayList
-	 */
-	public function Facets() {
-		$spec       = $this->getFacetSpec();
-		if (empty($spec)) return new ArrayList;
+    /**
+     * @param bool $recursive
+     * @return mixed
+     */
+    public function FilteredProducts($recursive=true)
+    {
+        if (!isset($this->_filteredProducts)) {
+            $fn = Config::inst()->get('FacetedCategory', 'products_method');
+            if (empty($fn)) {
+                $fn = 'ProductsShowable';
+            }
+            $this->_filteredProducts = $this->owner->$fn($recursive);
+            $this->_filteredProducts = FacetHelper::inst()->addFiltersToDataList($this->_filteredProducts, $this->getFilters());
+        }
 
-		// remove any disabled facets
-		foreach ($this->getDisabledFacetsArray() as $disabled) {
-			if (isset($spec[$disabled])) unset($spec[$disabled]);
-		}
+        return $this->_filteredProducts;
+    }
 
-		$request    = $this->getController()->getRequest();
-		$baseLink   = $request->getURL(false);
-		$filters    = $this->getFilters();
-		$baseParams = array_merge($request->requestVars(), array());
-		unset($baseParams['url']);
+    protected $_filteredProducts;
 
-		$products   = $this->owner->hasMethod('ProductsForFaceting') ? $this->owner->ProductsForFaceting() : $this->FilteredProducts();
-		$facets     = FacetHelper::inst()->buildFacets($products, $spec, (bool)Config::inst()->get('FacetedCategory', 'auto_facet_attributes'));
-		$facets     = FacetHelper::inst()->transformHierarchies($facets);
-		$facets     = FacetHelper::inst()->updateFacetState($facets, $filters);
-		$facets     = FacetHelper::inst()->insertFacetLinks($facets, $baseParams, $baseLink);
 
-		return $facets;
-	}
+    /**
+     * @return array
+     */
+    public function getDisabledFacetsArray()
+    {
+        if (empty($this->owner->DisabledFacets)) {
+            return array();
+        }
+        return explode(',', $this->owner->DisabledFacets);
+    }
+
+
+    /**
+     * @return ArrayList
+     */
+    public function Facets()
+    {
+        $spec       = $this->getFacetSpec();
+        if (empty($spec)) {
+            return new ArrayList;
+        }
+
+        // remove any disabled facets
+        foreach ($this->getDisabledFacetsArray() as $disabled) {
+            if (isset($spec[$disabled])) {
+                unset($spec[$disabled]);
+            }
+        }
+
+        $request    = $this->getController()->getRequest();
+        $baseLink   = $request->getURL(false);
+        $filters    = $this->getFilters();
+        $baseParams = array_merge($request->requestVars(), array());
+        unset($baseParams['url']);
+
+        $products   = $this->owner->hasMethod('ProductsForFaceting') ? $this->owner->ProductsForFaceting() : $this->FilteredProducts();
+        $facets     = FacetHelper::inst()->buildFacets($products, $spec, (bool)Config::inst()->get('FacetedCategory', 'auto_facet_attributes'));
+        $facets     = FacetHelper::inst()->transformHierarchies($facets);
+        $facets     = FacetHelper::inst()->updateFacetState($facets, $filters);
+        $facets     = FacetHelper::inst()->insertFacetLinks($facets, $baseParams, $baseLink);
+
+        return $facets;
+    }
 }
