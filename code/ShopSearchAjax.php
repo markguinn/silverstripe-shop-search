@@ -9,19 +9,22 @@
  */
 class ShopSearchAjax extends Extension
 {
-	/**
-	 * @param SS_HTTPRequest $request
-	 * @param SS_HTTPResponse $response
-	 * @param ArrayData $results
-	 * @param array $data
-	 */
-	public function updateSearchResultsResponse(&$request, &$response, $results, $data) {
-		if ($request->isAjax() && $this->owner->hasExtension('AjaxControllerExtension')) {
-			if (!$response) $response = $this->owner->getAjaxResponse();
-			$response->addRenderContext('RESULTS', $results);
-			$response->pushRegion('SearchResults', $results);
-			$response->pushRegion('SearchHeader', $results);
-			$response->triggerEvent('searchresults');
-		}
-	}
+    /**
+     * @param SS_HTTPRequest $request
+     * @param SS_HTTPResponse $response
+     * @param ArrayData $results
+     * @param array $data
+     */
+    public function updateSearchResultsResponse(&$request, &$response, $results, $data)
+    {
+        if ($request->isAjax() && $this->owner->hasExtension('AjaxControllerExtension')) {
+            if (!$response) {
+                $response = $this->owner->getAjaxResponse();
+            }
+            $response->addRenderContext('RESULTS', $results);
+            $response->pushRegion('SearchResults', $results);
+            $response->pushRegion('SearchHeader', $results);
+            $response->triggerEvent('searchresults');
+        }
+    }
 }
