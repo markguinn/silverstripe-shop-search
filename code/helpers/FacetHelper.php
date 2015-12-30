@@ -135,7 +135,7 @@ class FacetHelper extends Object
         // Next check for regular db fields
         if ($rec->dbObject($filterField)) {
             // Is it a range value?
-            if (preg_match('/^RANGE\~(.+)\~(.+)$/', $filterVal, $m)) {
+            if (is_string($filterVal) && preg_match('/^RANGE\~(.+)\~(.+)$/', $filterVal, $m)) {
                 $filterField .= ':Between';
                 $filterVal = array_slice($m, 1, 2);
             }
