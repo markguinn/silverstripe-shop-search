@@ -26,9 +26,11 @@ class VirtualFieldIndexQueuedJob extends AbstractQueuedJob implements QueuedJob
      * @param DataObject $object
      * @param array $fields
      */
-    public function __construct($object, array $fields)
+    public function __construct($object = null, $fields = array())
     {
-        $this->setObject($object);
+        if ($object) {
+            $this->setObject($object);
+        }
         $this->rebuildFields = $fields;
     }
 
@@ -58,6 +60,7 @@ class VirtualFieldIndexQueuedJob extends AbstractQueuedJob implements QueuedJob
     public function process()
     {
         Versioned::reading_stage('Stage');
+        /** @var DataObject|VirtualFieldIndex $obj */
         $obj = $this->getObject();
 
         if ($obj) {
