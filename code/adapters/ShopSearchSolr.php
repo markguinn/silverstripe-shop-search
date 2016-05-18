@@ -1,4 +1,8 @@
 <?php
+if (!class_exists('SolrIndex')) {
+    return;
+}
+
 /**
  * Search driver for the fulltext module with solr backend.
  *
