@@ -225,7 +225,7 @@ class FacetHelper extends Object
     public function buildFacets(SS_List $matches, array $facetSpec, $autoFacetAttributes=false)
     {
         $facets = $this->expandFacetSpec($facetSpec);
-        if (!$autoFacetAttributes && (empty($facets) || !$matches || !$matches->count())) {
+        if (!$autoFacetAttributes && (empty($facets) || !$matches)) {
             return new ArrayList();
         }
         $fasterMethod = (bool)$this->config()->faster_faceting;
