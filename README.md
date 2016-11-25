@@ -1,6 +1,8 @@
 Improved Search for Silverstripe Shop Submodule
 ===============================================
 
+[![Join the chat at https://gitter.im/markguinn/silverstripe-shop-search](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/markguinn/silverstripe-shop-search?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 [![Latest Stable Version](https://poser.pugx.org/markguinn/silverstripe-shop-search/v/stable.png)](https://packagist.org/packages/markguinn/silverstripe-shop-search)
 [![Latest Unstable Version](https://poser.pugx.org/markguinn/silverstripe-shop-search/v/unstable.png)](https://packagist.org/packages/markguinn/silverstripe-shop-search)
 [![Build Status](https://travis-ci.org/markguinn/silverstripe-shop-search.svg?branch=master)](http://travis-ci.org/markguinn/silverstripe-shop-search)
