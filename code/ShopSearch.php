@@ -6,7 +6,7 @@
  * @date 08.29.2013
  * @package shop_search
  */
-class ShopSearch extends Object
+class ShopSearch extends SS_Object
 {
     const FACET_TYPE_LINK       = 'link';
     const FACET_TYPE_CHECKBOX   = 'checkbox';

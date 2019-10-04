@@ -11,7 +11,7 @@
  * @package shop_search
  * @subpackage helpers
  */
-class FacetHelper extends Object
+class FacetHelper extends SS_Object
 {
     /** @var bool - if this is turned on it will use an algorithm that doesn't require traversing the data set if possible */
     private static $faster_faceting = false;

@@ -8,7 +8,7 @@
  * @date 09.03.2013
  * @package shop_search
  */
-class ShopSearchSimple extends Object implements ShopSearchAdapter
+class ShopSearchSimple extends SS_Object implements ShopSearchAdapter
 {
     /**
      * @param string $keywords
