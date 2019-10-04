@@ -7,7 +7,7 @@
  * @package shop_search
  * @subpackage adapters
  */
-class ShopSearchMysql extends Object implements ShopSearchAdapter
+class ShopSearchMysql extends SS_Object implements ShopSearchAdapter
 {
     /**
      * @param string $keywords
